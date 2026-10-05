@@ -1,19 +1,33 @@
 name: Build APK
+
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: 17
-      - uses: android-actions/setup-android@v3
-      - run: sdkmanager "platforms;android-33" "build-tools;34.0.0"
-      - run: chmod +x gradlew && ./gradlew :app:assembleDebug --no-daemon
-      - uses: actions/upload-artifact@v4
+          java-version: '17'
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
         with:
-          name: app-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: Sm-app-debug
+          path: app/build/outputs/apk/**/*.apk
