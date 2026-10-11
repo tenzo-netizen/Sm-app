@@ -2,16 +2,19 @@ package com.xyron.game.launcher.fragments;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.xyron.game.R;
@@ -58,11 +61,7 @@ public class ServersFragment extends Fragment {
 
         if (addServerShortcut != null) {
             addServerShortcut.setOnTouchListener(new ButtonAnimator(requireContext(), addServerShortcut));
-            addServerShortcut.setOnClickListener(v -> {
-                if (getActivity() instanceof MainActivity) {
-                    ((MainActivity) getActivity()).openTab(MainActivity.TAB_SETTINGS);
-                }
-            });
+            addServerShortcut.setOnClickListener(v -> showAddServerDialog());
         }
 
         refreshContent();
@@ -138,6 +137,81 @@ public class ServersFragment extends Fragment {
         }
     }
 
+    private void showAddServerDialog() {
+        if (getContext() == null) {
+            return;
+        }
+
+        View dialogView = LayoutInflater.from(requireContext()).inflate(
+                R.layout.dialog_add_server,
+                null,
+                false
+        );
+        EditText input = dialogView.findViewById(R.id.dialog_server_input);
+        TextView cancelButton = dialogView.findViewById(R.id.dialog_server_cancel);
+        TextView saveButton = dialogView.findViewById(R.id.dialog_server_save);
+        TextView limitText = dialogView.findViewById(R.id.dialog_server_limit);
+
+        if (limitText != null) {
+            limitText.setText("دەتوانیت تا "
+                    + ServerConfigManager.getMaxSavedServers()
+                    + " سێرڤەر پاشەکەوت بکەیت.");
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
+        dialog.setCancelable(true);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        if (cancelButton != null) {
+            cancelButton.setOnTouchListener(new ButtonAnimator(getContext(), cancelButton));
+            cancelButton.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (saveButton != null) {
+            saveButton.setOnTouchListener(new ButtonAnimator(getContext(), saveButton));
+            saveButton.setOnClickListener(v -> {
+                String rawAddress = input != null && input.getText() != null
+                        ? input.getText().toString().trim()
+                        : "";
+
+                if (!ServerConfigManager.isValidRawAddress(rawAddress)) {
+                    Toast.makeText(
+                            getContext(),
+                            "بە شێوەی IP:PORT بینووسە، وەک 127.0.0.1:7777",
+                            Toast.LENGTH_LONG
+                    ).show();
+                    return;
+                }
+
+                ServerConfigManager.ServerOption option =
+                        ServerConfigManager.addOrUpdateServer(requireContext(), rawAddress);
+                if (!option.isValid()) {
+                    Toast.makeText(
+                            getContext(),
+                            "دەتوانیت لانی زۆر "
+                                    + ServerConfigManager.getMaxSavedServers()
+                                    + " سێرڤەر پاشەکەوت بکەیت.",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                    return;
+                }
+
+                Toast.makeText(getContext(), "سێرڤەر زیاد کرا.", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+                refreshContent();
+            });
+        }
+
+        dialog.show();
+        if (input != null) {
+            input.requestFocus();
+        }
+    }
+
     private void bindServerItem(Context context,
                                 View itemView,
                                 ServerConfigManager.ServerOption option,
@@ -159,32 +233,32 @@ public class ServersFragment extends Fragment {
         metaView.setText(buildMeta(liveInfo));
         addressView.setText(option.getAddress());
 
-        selectAction.setText(isSelected ? "Ativo" : "Selecionar");
+        selectAction.setText(isSelected ? "چالاک" : "هەڵبژێرە");
         selectAction.setAlpha(isSelected ? 0.92f : 1.0f);
         selectAction.setOnTouchListener(new ButtonAnimator(context, selectAction));
         selectAction.setOnClickListener(v -> {
             boolean saved = ServerConfigManager.saveSelectedServer(context, option);
             if (!saved) {
-                Toast.makeText(context, "Nao foi possivel selecionar o servidor.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "نەتوانرا سێرڤەر هەڵبژێردرێت.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             refreshContent();
-            Toast.makeText(context, "Servidor ativo: " + option.getAddress(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "سێرڤەری چالاک: " + option.getAddress(), Toast.LENGTH_SHORT).show();
         });
 
         removeAction.setOnTouchListener(new ButtonAnimator(context, removeAction));
         removeAction.setOnClickListener(v -> {
             boolean removed = ServerConfigManager.removeServer(context, option);
             if (!removed) {
-                Toast.makeText(context, "Nao foi possivel remover o servidor.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "نەتوانرا سێرڤەر لاببرێت.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             serverInfoCache.remove(option.getAddress());
             activeRequests.remove(option.getAddress());
             refreshContent();
-            Toast.makeText(context, "Servidor removido: " + option.getAddress(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "سێرڤەر لابرا: " + option.getAddress(), Toast.LENGTH_SHORT).show();
         });
 
         applyItemStyle(itemView, isSelected, liveInfo);
@@ -273,21 +347,21 @@ public class ServersFragment extends Fragment {
     private String buildSummary(boolean isSelected, ServerLiveInfo info) {
         if (info == null) {
             return isSelected
-                    ? "Ativo no jogo | consultando servidor..."
-                    : "Consultando status, ping e jogadores...";
+                    ? "چالاکە لە یارییەکەدا | پشکنینی سێرڤەر..."
+                    : "پشکنینی دۆخ و پینگ و یاریزانەکان...";
         }
 
         if (!info.online) {
             return isSelected
-                    ? "Ativo no jogo | offline no momento"
-                    : "Offline | sem resposta ao query";
+                    ? "چالاکە لە یارییەکەدا | ئێستا ئۆفڵاینە"
+                    : "ئۆفڵاین | وەڵامی نەدایەوە";
         }
 
         StringBuilder summary = new StringBuilder();
         if (isSelected) {
-            summary.append("Ativo | ");
+            summary.append("چالاک | ");
         }
-        summary.append("Online");
+        summary.append("ئۆنڵاین");
         summary.append(" | ").append(info.currentPlayers).append("/").append(info.maxPlayers);
         if (info.ping > 0) {
             summary.append(" | ").append(info.ping).append(" ms");
@@ -297,19 +371,19 @@ public class ServersFragment extends Fragment {
 
     private String buildMeta(ServerLiveInfo info) {
         if (info == null) {
-            return "Buscando nome real, modo de jogo e linguagem...";
+            return "گەڕان بۆ ناو و جۆری یاری و زمان...";
         }
 
         if (!info.online) {
-            return "O nome, o modo e a linguagem aparecem quando o servidor responder.";
+            return "ناو و جۆر و زمان دەردەکەون کاتێک سێرڤەر وەڵام بداتەوە.";
         }
 
         if (info.serverName.isEmpty() && info.gameMode.isEmpty() && info.language.isEmpty()) {
-            return "Servidor respondeu ao ping, mas nao enviou detalhes de nome, modo ou linguagem.";
+            return "سێرڤەر وەڵامی پینگی دایەوە، بەڵام ناو و جۆر و زمانی نەنارد.";
         }
 
         String modeType = classifyMode(info.gameMode, info.serverName);
-        String language = info.language.isEmpty() ? "Unknown" : info.language;
+        String language = info.language.isEmpty() ? "نەزانراو" : info.language;
 
         if (info.gameMode.isEmpty()) {
             return modeType + " | " + language;
@@ -322,7 +396,7 @@ public class ServersFragment extends Fragment {
         if (haystack.contains("roleplay") || haystack.contains("role play") || haystack.contains(" rp")) {
             return "RP";
         }
-        return "Nao RP";
+        return "نا RP";
     }
 
     private void applyItemStyle(View itemView, boolean isSelected, ServerLiveInfo info) {

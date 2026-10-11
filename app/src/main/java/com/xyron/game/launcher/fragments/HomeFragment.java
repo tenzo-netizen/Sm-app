@@ -61,17 +61,12 @@ public class HomeFragment extends Fragment {
             selectServerButton.setOnClickListener(v -> {
                 if (getActivity() instanceof MainActivity) {
                     ((MainActivity) getActivity()).openTab(
-                            ServerConfigManager.hasConfiguredServers(requireContext())
-                                    ? MainActivity.TAB_SERVERS
-                                    : MainActivity.TAB_SETTINGS
+                            MainActivity.TAB_SERVERS
                     );
                 }
             });
         }
 
-        configureTabShortcut(root, R.id.home_quick_host, MainActivity.TAB_HOST);
-        configureTabShortcut(root, R.id.home_quick_files, MainActivity.TAB_HOST_FILES);
-        configureTabShortcut(root, R.id.home_quick_settings, MainActivity.TAB_SETTINGS);
 
         if (nextStepButton != null) {
             nextStepButton.setOnTouchListener(new ButtonAnimator(requireContext(), nextStepButton));
@@ -119,11 +114,11 @@ public class HomeFragment extends Fragment {
 
         if (!hasServers) {
             if (selectServerButton != null) {
-                selectServerButton.setText("Adicionar servidor");
+                selectServerButton.setText("زیادکردنی سێرڤەر");
             }
-            selectedServerName.setText("Sem servidor ativo");
-            selectedServerAddress.setText("Toque em Adicionar servidor");
-            selectedServerHint.setText("Depois de salvar um IP, ele fica pronto para usar aqui.");
+            selectedServerName.setText("هیچ سێرڤەرێکی چالاک نییە");
+            selectedServerAddress.setText("دوگمەی «زیادکردنی سێرڤەر» دابگرە");
+            selectedServerHint.setText("دوای پاشەکەوتکردنی IP، لێرە ئامادە دەبێت بۆ بەکارهێنان.");
             updateReadiness(hasGameData, false, false);
             return;
         }
@@ -131,23 +126,23 @@ public class HomeFragment extends Fragment {
         ServerConfigManager.ServerOption selectedServer = ServerConfigManager.getSelectedServer(context);
         if (selectedServer == null || !selectedServer.isValid()) {
             if (selectServerButton != null) {
-                selectServerButton.setText("Escolher servidor");
+                selectServerButton.setText("هەڵبژاردنی سێرڤەر");
             }
-            selectedServerName.setText("Sem servidor ativo");
-            selectedServerAddress.setText("Escolha um IP salvo em Servidores");
-            selectedServerHint.setText("O servidor escolhido fica aplicado no jogo automaticamente.");
+            selectedServerName.setText("هیچ سێرڤەرێکی چالاک نییە");
+            selectedServerAddress.setText("IPـیەکی پاشەکەوتکراو لە سێرڤەرەکان هەڵبژێرە");
+            selectedServerHint.setText("سێرڤەری هەڵبژێردراو خۆکارانە لە یارییەکەدا جێبەجێ دەبێت.");
             updateReadiness(hasGameData, true, false);
             return;
         }
 
         if (selectServerButton != null) {
-            selectServerButton.setText("Trocar servidor");
+            selectServerButton.setText("گۆڕینی سێرڤەر");
         }
-        selectedServerName.setText("Pronto para jogar");
+        selectedServerName.setText("ئامادەیە بۆ یاری");
         selectedServerAddress.setText(selectedServer.getAddress());
         selectedServerHint.setText(selectedServer.favorite
-                ? "Servidor favoritado e pronto para abrir no jogo."
-                : "Servidor pronto para abrir no jogo. Use Trocar servidor para mudar.");
+                ? "سێرڤەری دڵخوازە و ئامادەیە بۆ کردنەوە لە یارییەکەدا."
+                : "سێرڤەر ئامادەیە بۆ کردنەوە لە یارییەکەدا. بۆ گۆڕین «گۆڕینی سێرڤەر» بەکاربهێنە.");
         updateReadiness(hasGameData, true, true);
     }
 
@@ -158,37 +153,37 @@ public class HomeFragment extends Fragment {
 
         if (!hasGameData) {
             nextStepAction = NEXT_STEP_UPDATE_DATA;
-            readinessTitle.setText("Dados pendentes");
-            readinessBody.setText("Baixe os arquivos do jogo");
-            nextStepButton.setText("Baixar dados");
+            readinessTitle.setText("داتا ماوە");
+            readinessBody.setText("فایلەکانی یاری دابگرە");
+            nextStepButton.setText("داگرتنی داتا");
             return;
         }
 
         if (!hasServers) {
             nextStepAction = NEXT_STEP_ADD_SERVER;
-            readinessTitle.setText("Falta servidor");
-            readinessBody.setText("Adicione um IP:PORTA");
-            nextStepButton.setText("Adicionar servidor");
+            readinessTitle.setText("سێرڤەر کەمە");
+            readinessBody.setText("IP:PORT زیاد بکە");
+            nextStepButton.setText("زیادکردنی سێرڤەر");
             return;
         }
 
         if (!hasSelectedServer) {
             nextStepAction = NEXT_STEP_CHOOSE_SERVER;
-            readinessTitle.setText("Escolha o servidor");
-            readinessBody.setText("Defina o IP ativo");
-            nextStepButton.setText("Escolher servidor");
+            readinessTitle.setText("سێرڤەر هەڵبژێرە");
+            readinessBody.setText("IPـی چالاک دیاری بکە");
+            nextStepButton.setText("هەڵبژاردنی سێرڤەر");
             return;
         }
 
         nextStepAction = NEXT_STEP_PLAY;
         if (isLauncherRole()) {
-            readinessTitle.setText("Servidor pronto");
-            readinessBody.setText("Abre pelo APK Game");
-            nextStepButton.setText("Abrir Game");
+            readinessTitle.setText("سێرڤەر ئامادەیە");
+            readinessBody.setText("لە APKـی یاری بیکەرەوە");
+            nextStepButton.setText("کردنەوەی یاری");
         } else {
-            readinessTitle.setText("Tudo pronto");
-            readinessBody.setText("Pode entrar no jogo");
-            nextStepButton.setText("Jogar agora");
+            readinessTitle.setText("هەموو شتێک ئامادەیە");
+            readinessBody.setText("دەتوانیت بچیتە ناو یارییەکە");
+            nextStepButton.setText("ئێستا یاری بکە");
         }
     }
 
@@ -206,7 +201,7 @@ public class HomeFragment extends Fragment {
         }
 
         if (nextStepAction == NEXT_STEP_ADD_SERVER) {
-            activity.openTab(MainActivity.TAB_SETTINGS);
+            activity.openTab(MainActivity.TAB_SERVERS);
             return;
         }
 

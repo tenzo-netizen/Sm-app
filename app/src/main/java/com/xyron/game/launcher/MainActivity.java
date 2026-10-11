@@ -516,14 +516,7 @@ public class MainActivity extends SampActivity {
     private int[] resolveActiveTabs() {
         return new int[] {
                 TAB_HOME,
-                TAB_SERVERS,
-                TAB_HOST,
-                TAB_HOST_FILES,
-                TAB_EDITOR,
-                TAB_WORKBENCH,
-                TAB_STORE,
-                TAB_SETTINGS,
-                TAB_CREDITS
+                TAB_SERVERS
         };
     }
 

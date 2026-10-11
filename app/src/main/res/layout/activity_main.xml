@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/launcher_app_background"
-    android:keepScreenOn="true">
+    android:keepScreenOn="true"
+    android:layoutDirection="rtl">
 
     <LinearLayout
         android:id="@+id/menu_buttons"
@@ -18,27 +19,27 @@
         android:elevation="14dp"
         android:gravity="start"
         android:orientation="horizontal"
-        android:paddingStart="7dp"
-        android:paddingTop="7dp"
-        android:paddingEnd="7dp"
-        android:paddingBottom="7dp"
+        android:paddingStart="12dp"
+        android:paddingTop="9dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="9dp"
         android:translationZ="14dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:id="@+id/nav_item_home"
-            android:layout_width="58dp"
+            android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btn_home"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/launcher_nav_button_idle"
-                android:contentDescription="Inicio"
+                android:contentDescription="سەرەکی"
                 android:padding="10dp"
                 android:src="@drawable/ic_home_off" />
 
@@ -46,28 +47,28 @@
                 android:id="@+id/nav_label_home"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
                 android:maxLines="1"
-                android:text="Inicio"
+                android:text="سەرەکی"
                 android:textColor="@color/launcher_text_muted"
-                android:textSize="7.2sp" />
+                android:textSize="10.5sp" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/nav_item_servers"
-            android:layout_width="62dp"
+            android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btn_servers"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/launcher_nav_button_idle"
-                android:contentDescription="Servidores"
+                android:contentDescription="سێرڤەرەکان"
                 android:padding="10dp"
                 android:src="@drawable/ic_servers_off" />
 
@@ -75,26 +76,27 @@
                 android:id="@+id/nav_label_servers"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
                 android:maxLines="1"
-                android:text="Serv."
+                android:text="سێرڤەرەکان"
                 android:textColor="@color/launcher_text_muted"
-                android:textSize="7.2sp" />
+                android:textSize="10.5sp" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/nav_item_host"
-            android:layout_width="58dp"
+            android:visibility="gone"
+            android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btn_host"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/launcher_nav_button_idle"
                 android:contentDescription="Host"
                 android:padding="10dp"
@@ -104,26 +106,27 @@
                 android:id="@+id/nav_label_host"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
                 android:maxLines="1"
                 android:text="Host"
                 android:textColor="@color/launcher_text_muted"
-                android:textSize="7.2sp" />
+                android:textSize="10.5sp" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/nav_item_files"
-            android:layout_width="58dp"
+            android:visibility="gone"
+            android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btn_files"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/launcher_nav_button_idle"
                 android:contentDescription="Arquivos"
                 android:padding="10dp"
@@ -133,26 +136,27 @@
                 android:id="@+id/nav_label_files"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
                 android:maxLines="1"
                 android:text="Arquivos"
                 android:textColor="@color/launcher_text_muted"
-                android:textSize="7.2sp" />
+                android:textSize="10.5sp" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/nav_item_editor"
-            android:layout_width="58dp"
+            android:visibility="gone"
+            android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btn_editor"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/launcher_nav_button_idle"
                 android:contentDescription="Editor"
                 android:padding="10dp"
@@ -162,26 +166,27 @@
                 android:id="@+id/nav_label_editor"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
                 android:maxLines="1"
                 android:text="Editor"
                 android:textColor="@color/launcher_text_muted"
-                android:textSize="7.2sp" />
+                android:textSize="10.5sp" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/nav_item_workbench"
-            android:layout_width="58dp"
+            android:visibility="gone"
+            android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btn_workbench"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/launcher_nav_button_idle"
                 android:contentDescription="Ferramentas"
                 android:padding="10dp"
@@ -191,26 +196,27 @@
                 android:id="@+id/nav_label_workbench"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
                 android:maxLines="1"
                 android:text="Tools"
                 android:textColor="@color/launcher_text_muted"
-                android:textSize="7.2sp" />
+                android:textSize="10.5sp" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/nav_item_donate"
-            android:layout_width="58dp"
+            android:visibility="gone"
+            android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btn_donate"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/launcher_nav_button_idle"
                 android:contentDescription="Loja"
                 android:padding="10dp"
@@ -220,26 +226,27 @@
                 android:id="@+id/nav_label_donate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
                 android:maxLines="1"
                 android:text="Loja"
                 android:textColor="@color/launcher_text_muted"
-                android:textSize="7.2sp" />
+                android:textSize="10.5sp" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/nav_item_settings"
-            android:layout_width="58dp"
+            android:visibility="gone"
+            android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btn_settings"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/launcher_nav_button_idle"
                 android:contentDescription="Config"
                 android:padding="10dp"
@@ -249,26 +256,27 @@
                 android:id="@+id/nav_label_settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
                 android:maxLines="1"
                 android:text="Config"
                 android:textColor="@color/launcher_text_muted"
-                android:textSize="7.2sp" />
+                android:textSize="10.5sp" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/nav_item_credits"
-            android:layout_width="58dp"
+            android:visibility="gone"
+            android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btn_credits"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/launcher_nav_button_idle"
                 android:contentDescription="Creditos"
                 android:padding="10dp"
@@ -278,13 +286,13 @@
                 android:id="@+id/nav_label_credits"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
                 android:maxLines="1"
                 android:text="Creditos"
                 android:textColor="@color/launcher_text_muted"
-                android:textSize="7.2sp" />
+                android:textSize="10.5sp" />
         </LinearLayout>
     </LinearLayout>
 

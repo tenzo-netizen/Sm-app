@@ -43,10 +43,10 @@
             android:paddingTop="5dp"
             android:paddingEnd="10dp"
             android:paddingBottom="5dp"
-            android:text="SALVO"
+            android:text="پاشەکەوتکراو"
             android:textAllCaps="true"
             android:textColor="@color/launcher_text_secondary"
-            android:textSize="7sp" />
+            android:textSize="8.5sp" />
     </LinearLayout>
 
     <TextView
@@ -56,7 +56,7 @@
         android:layout_marginTop="10dp"
         android:fontFamily="@font/montserrat_bold"
         android:textColor="@color/launcher_text_secondary"
-        android:textSize="10sp" />
+        android:textSize="11.5sp" />
 
     <TextView
         android:id="@+id/item_server_meta"
@@ -65,7 +65,7 @@
         android:layout_marginTop="6dp"
         android:fontFamily="@font/montserrat_medium"
         android:textColor="@color/launcher_text_muted"
-        android:textSize="8.5sp" />
+        android:textSize="10sp" />
 
     <TextView
         android:id="@+id/item_server_address"
@@ -79,7 +79,7 @@
         android:paddingEnd="12dp"
         android:paddingBottom="10dp"
         android:textColor="#D8E2EC"
-        android:textSize="9sp" />
+        android:textSize="10.5sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -98,9 +98,9 @@
             android:minWidth="96dp"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
-            android:text="Selecionar"
+            android:text="هەڵبژێرە"
             android:textColor="@android:color/white"
-            android:textSize="9sp" />
+            android:textSize="10.5sp" />
 
         <TextView
             android:id="@+id/item_server_remove_action"
@@ -113,9 +113,9 @@
             android:minWidth="90dp"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
-            android:text="Remover"
+            android:text="لابردن"
             android:textColor="@android:color/white"
-            android:textSize="9sp" />
+            android:textSize="10.5sp" />
     </LinearLayout>
 
 </LinearLayout>

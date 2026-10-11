@@ -2,6 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layoutDirection="rtl"
     android:padding="8dp">
 
     <LinearLayout
@@ -20,17 +21,17 @@
             android:paddingTop="5dp"
             android:paddingEnd="10dp"
             android:paddingBottom="5dp"
-            android:text="Servidor"
+            android:text="سێرڤەر"
             android:textAllCaps="true"
             android:textColor="@android:color/white"
-            android:textSize="8sp" />
+            android:textSize="9.5sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:fontFamily="@font/montserrat_black"
-            android:text="Adicionar servidor"
+            android:text="زیادکردنی سێرڤەر"
             android:textColor="@android:color/white"
             android:textSize="18sp" />
 
@@ -39,9 +40,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:fontFamily="@font/montserrat_medium"
-            android:text="Digite no formato IP:PORTA. Exemplo: 127.0.0.1:7777"
+            android:text="بە شێوەی IP:PORT بینووسە. نموونە: 127.0.0.1:7777"
             android:textColor="@color/launcher_text_secondary"
-            android:textSize="9sp" />
+            android:textSize="10.5sp" />
 
         <EditText
             android:id="@+id/dialog_server_input"
@@ -50,14 +51,16 @@
             android:layout_marginTop="14dp"
             android:background="@drawable/launcher_field_surface_dark"
             android:fontFamily="@font/montserrat_bold"
-            android:hint="IP:PORTA"
+            android:hint="IP:PORT"
+            android:textDirection="ltr"
+            android:gravity="start|center_vertical"
             android:imeOptions="actionDone|flagNoExtractUi"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
             android:singleLine="true"
             android:textColor="@android:color/white"
             android:textColorHint="@color/launcher_text_muted"
-            android:textSize="10sp" />
+            android:textSize="11.5sp" />
 
         <TextView
             android:id="@+id/dialog_server_limit"
@@ -65,9 +68,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="7dp"
             android:fontFamily="@font/montserrat_medium"
-            android:text="Voce pode salvar ate 5 servidores."
+            android:text="دەتوانیت تا ٥ سێرڤەر پاشەکەوت بکەیت."
             android:textColor="@color/launcher_text_muted"
-            android:textSize="8sp" />
+            android:textSize="9.5sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -83,9 +86,9 @@
                 android:background="@drawable/home_action_text_button"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
-                android:text="Cancelar"
+                android:text="پاشگەزبوونەوە"
                 android:textColor="@android:color/white"
-                android:textSize="10sp" />
+                android:textSize="11.5sp" />
 
             <TextView
                 android:id="@+id/dialog_server_save"
@@ -96,9 +99,9 @@
                 android:background="@drawable/home_server_select_button"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
-                android:text="Salvar"
+                android:text="پاشەکەوتکردن"
                 android:textColor="@android:color/white"
-                android:textSize="10sp" />
+                android:textSize="11.5sp" />
         </LinearLayout>
     </LinearLayout>
 

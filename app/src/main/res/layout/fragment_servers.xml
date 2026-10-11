@@ -45,10 +45,10 @@
                         android:paddingTop="5dp"
                         android:paddingEnd="10dp"
                         android:paddingBottom="5dp"
-                        android:text="Servidores"
+                        android:text="سێرڤەرەکان"
                         android:textAllCaps="true"
                         android:textColor="@android:color/white"
-                        android:textSize="8sp" />
+                        android:textSize="9.5sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -60,10 +60,10 @@
                         android:paddingTop="5dp"
                         android:paddingEnd="10dp"
                         android:paddingBottom="5dp"
-                        android:text="ATUALIZACAO AO VIVO"
+                        android:text="نوێکردنەوەی ڕاستەوخۆ"
                         android:textAllCaps="true"
                         android:textColor="@color/launcher_text_secondary"
-                        android:textSize="7.5sp" />
+                        android:textSize="9sp" />
                 </LinearLayout>
 
                 <TextView
@@ -71,7 +71,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:fontFamily="@font/montserrat_black"
-                    android:text="Servidores salvos"
+                    android:text="سێرڤەرە پاشەکەوتکراوەکان"
                     android:textColor="@android:color/white"
                     android:textSize="21sp" />
 
@@ -82,9 +82,9 @@
                     android:maxWidth="700dp"
                     android:fontFamily="@font/montserrat_medium"
                     android:lineSpacingExtra="2dp"
-                    android:text="Gerencie sua lista, veja status em tempo real e escolha qual IP o jogo deve abrir."
+                    android:text="لیستەکەت بەڕێوەببە، دۆخی ڕاستەوخۆ ببینە و IPـی یارییەکە هەڵبژێرە."
                     android:textColor="@color/launcher_text_secondary"
-                    android:textSize="9.5sp" />
+                    android:textSize="11sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -104,16 +104,16 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/montserrat_bold"
-                            android:text="Biblioteca local"
+                            android:text="کتێبخانەی ناوخۆیی"
                             android:textColor="@android:color/white"
-                            android:textSize="10sp" />
+                            android:textSize="11.5sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
                             android:fontFamily="@font/montserrat_black"
-                            android:text="Lista local"
+                            android:text="لیستی ناوخۆیی"
                             android:textColor="@color/launcher_accent_gold_bright"
                             android:textSize="13sp" />
 
@@ -122,9 +122,9 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:fontFamily="@font/montserrat_medium"
-                            android:text="Cada IP entra na sequencia que voce salvar"
+                            android:text="هەر IPـیەک بەپێی ڕیزبەندی پاشەکەوتکردنەکەت دێت"
                             android:textColor="@color/launcher_text_muted"
-                            android:textSize="8.5sp" />
+                            android:textSize="10sp" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -140,16 +140,16 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/montserrat_bold"
-                            android:text="Query curta"
+                            android:text="پرسیاری کورت"
                             android:textColor="@android:color/white"
-                            android:textSize="10sp" />
+                            android:textSize="11.5sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
                             android:fontFamily="@font/montserrat_black"
-                            android:text="Status ao vivo"
+                            android:text="دۆخی ڕاستەوخۆ"
                             android:textColor="@color/launcher_text_primary"
                             android:textSize="13sp" />
 
@@ -158,9 +158,9 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:fontFamily="@font/montserrat_medium"
-                            android:text="Sem ficar preso em valor velho"
+                            android:text="بێ ئەوەی بە زانیاری کۆن بمێنیتەوە"
                             android:textColor="@color/launcher_text_muted"
-                            android:textSize="8.5sp" />
+                            android:textSize="10sp" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -176,16 +176,16 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/montserrat_bold"
-                            android:text="Troca imediata"
+                            android:text="گۆڕینی دەستبەجێ"
                             android:textColor="@android:color/white"
-                            android:textSize="10sp" />
+                            android:textSize="11.5sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
                             android:fontFamily="@font/montserrat_black"
-                            android:text="Entrada direta"
+                            android:text="چوونەژوورەوەی ڕاستەوخۆ"
                             android:textColor="@color/launcher_text_primary"
                             android:textSize="13sp" />
 
@@ -194,9 +194,9 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:fontFamily="@font/montserrat_medium"
-                            android:text="O IP ativo vai direto para o jogo"
+                            android:text="IPـی چالاک ڕاستەوخۆ دەچێتە یارییەکە"
                             android:textColor="@color/launcher_text_muted"
-                            android:textSize="8.5sp" />
+                            android:textSize="10sp" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -210,10 +210,10 @@
                     android:paddingTop="6dp"
                     android:paddingEnd="12dp"
                     android:paddingBottom="6dp"
-                    android:text="SERVIDORES SALVOS"
+                    android:text="سێرڤەرە پاشەکەوتکراوەکان"
                     android:textAllCaps="true"
                     android:textColor="@color/launcher_accent_gold_bright"
-                    android:textSize="8sp" />
+                    android:textSize="9.5sp" />
 
                 <TextView
                     android:id="@+id/server_empty_state"
@@ -223,9 +223,9 @@
                     android:background="@drawable/launcher_console_surface"
                     android:fontFamily="@font/montserrat_medium"
                     android:padding="16dp"
-                    android:text="Nenhum servidor salvo ainda."
+                    android:text="هێشتا هیچ سێرڤەرێک پاشەکەوت نەکراوە."
                     android:textColor="@color/launcher_text_secondary"
-                    android:textSize="10sp"
+                    android:textSize="11.5sp"
                     android:visibility="gone" />
 
                 <TextView
@@ -236,9 +236,9 @@
                     android:background="@drawable/home_server_select_button"
                     android:fontFamily="@font/montserrat_bold"
                     android:gravity="center"
-                    android:text="Adicionar servidor"
+                    android:text="زیادکردنی سێرڤەر"
                     android:textColor="@android:color/white"
-                    android:textSize="10sp"
+                    android:textSize="11.5sp"
                     android:visibility="gone" />
 
                 <LinearLayout
