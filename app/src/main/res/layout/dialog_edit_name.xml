@@ -2,7 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp">
+    android:padding="8dp"
+    android:layoutDirection="rtl">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,17 +21,17 @@
             android:paddingTop="5dp"
             android:paddingEnd="10dp"
             android:paddingBottom="5dp"
-            android:text="Perfil"
+            android:text="پرۆفایل"
             android:textAllCaps="true"
             android:textColor="@android:color/white"
-            android:textSize="8sp" />
+            android:textSize="9.5sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:fontFamily="@font/montserrat_black"
-            android:text="Editar nome"
+            android:text="گۆڕینی ناو"
             android:textColor="@android:color/white"
             android:textSize="18sp" />
 
@@ -39,9 +40,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:fontFamily="@font/montserrat_medium"
-            android:text="Escolha o nick que vai para o arquivo do jogo."
+            android:text="ناوێک هەڵبژێرە کە دەچێتە فایلی یارییەکە."
             android:textColor="@color/launcher_text_secondary"
-            android:textSize="9sp" />
+            android:textSize="10.5sp" />
 
         <EditText
             android:id="@+id/dialog_name_input"
@@ -58,7 +59,7 @@
             android:singleLine="true"
             android:textColor="@android:color/white"
             android:textColorHint="@color/launcher_text_muted"
-            android:textSize="10sp" />
+            android:textSize="11.5sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -74,9 +75,9 @@
                 android:background="@drawable/home_action_text_button"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
-                android:text="Cancelar"
+                android:text="پاشگەزبوونەوە"
                 android:textColor="@android:color/white"
-                android:textSize="10sp" />
+                android:textSize="11.5sp" />
 
             <TextView
                 android:id="@+id/dialog_name_save"
@@ -87,9 +88,9 @@
                 android:background="@drawable/home_server_select_button"
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
-                android:text="Salvar"
+                android:text="پاشەکەوتکردن"
                 android:textColor="@android:color/white"
-                android:textSize="10sp" />
+                android:textSize="11.5sp" />
         </LinearLayout>
     </LinearLayout>
 

@@ -24,6 +24,9 @@ import com.xyron.game.launcher.util.SampQueryApi;
 import com.xyron.game.launcher.util.ServerConfigManager;
 import com.xyron.game.launcher.util.Util;
 
+import org.ini4j.Wini;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -47,6 +50,8 @@ public class ServersFragment extends Fragment {
         }
     };
 
+    private Wini mWini;
+    private TextView nicknameValue;
     private TextView emptyState;
     private TextView addServerShortcut;
     private LinearLayout serverListContainer;
@@ -63,6 +68,14 @@ public class ServersFragment extends Fragment {
             addServerShortcut.setOnTouchListener(new ButtonAnimator(requireContext(), addServerShortcut));
             addServerShortcut.setOnClickListener(v -> showAddServerDialog());
         }
+
+        nicknameValue = root.findViewById(R.id.player_name_value);
+        TextView editProfileButton = root.findViewById(R.id.button_edit_profile);
+        if (editProfileButton != null) {
+            editProfileButton.setOnTouchListener(new ButtonAnimator(requireContext(), editProfileButton));
+            editProfileButton.setOnClickListener(v -> showNicknameDialog());
+        }
+        loadNickname();
 
         refreshContent();
         return root;
@@ -127,13 +140,127 @@ public class ServersFragment extends Fragment {
 
         emptyState.setVisibility(View.GONE);
         if (addServerShortcut != null) {
-            addServerShortcut.setVisibility(View.GONE);
+            addServerShortcut.setVisibility(View.VISIBLE);
         }
 
         for (ServerConfigManager.ServerOption option : options) {
             View itemView = inflater.inflate(R.layout.item_server_selector, serverListContainer, false);
             bindServerItem(context, itemView, option, selectedServer);
             serverListContainer.addView(itemView);
+        }
+    }
+
+    private void openSettingsFile() {
+        if (getActivity() == null || getActivity().getExternalFilesDir(null) == null) {
+            mWini = null;
+            return;
+        }
+
+        File file = new File(getActivity().getExternalFilesDir(null), "SAMP/settings.ini");
+        try {
+            if (!file.exists()) {
+                File parent = file.getParentFile();
+                if (parent != null && !parent.exists()) {
+                    parent.mkdirs();
+                }
+                file.createNewFile();
+            }
+            mWini = new Wini(file);
+        } catch (IOException e) {
+            mWini = null;
+            e.printStackTrace();
+        }
+    }
+
+    private String readNickname() {
+        openSettingsFile();
+        if (mWini == null) {
+            return "";
+        }
+        String value = mWini.get("client", "name");
+        return value == null ? "" : value.trim();
+    }
+
+    private void loadNickname() {
+        if (nicknameValue == null) {
+            return;
+        }
+        String nickname = readNickname();
+        nicknameValue.setText(nickname.isEmpty() ? "هیچ ناوێک دیاری نەکراوە" : nickname);
+    }
+
+    private void saveNickname(String nickname) {
+        openSettingsFile();
+        boolean saved = false;
+        if (mWini != null) {
+            try {
+                mWini.put("client", "name", nickname);
+                mWini.store();
+                saved = true;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (!saved) {
+            Toast.makeText(getContext(), "نەتوانرا ناو پاشەکەوت بکرێت.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(getContext(), "ناو پاشەکەوت کرا.", Toast.LENGTH_SHORT).show();
+        loadNickname();
+    }
+
+    private void showNicknameDialog() {
+        if (getContext() == null) {
+            return;
+        }
+
+        View dialogView = LayoutInflater.from(requireContext()).inflate(
+                R.layout.dialog_edit_name,
+                null,
+                false
+        );
+        EditText input = dialogView.findViewById(R.id.dialog_name_input);
+        TextView cancelButton = dialogView.findViewById(R.id.dialog_name_cancel);
+        TextView saveButton = dialogView.findViewById(R.id.dialog_name_save);
+
+        if (input != null) {
+            input.setText(readNickname());
+            input.setSelection(input.getText() != null ? input.getText().length() : 0);
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
+        dialog.setCancelable(true);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        if (cancelButton != null) {
+            cancelButton.setOnTouchListener(new ButtonAnimator(getContext(), cancelButton));
+            cancelButton.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        if (saveButton != null) {
+            saveButton.setOnTouchListener(new ButtonAnimator(getContext(), saveButton));
+            saveButton.setOnClickListener(v -> {
+                String nickname = input != null && input.getText() != null
+                        ? input.getText().toString().trim()
+                        : "";
+                if (nickname.isEmpty()) {
+                    Toast.makeText(getContext(), "ناوێک بنووسە بۆ پاشەکەوتکردن لە یارییەکەدا.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                saveNickname(nickname);
+                dialog.dismiss();
+            });
+        }
+
+        dialog.show();
+        if (input != null) {
+            input.requestFocus();
         }
     }
 
