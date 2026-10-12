@@ -1048,6 +1048,66 @@ public class SAMP extends com.raiferoleplay.game.game.SAMP implements CustomKeyb
         }
     }
 
+    private void sendHudKey(int action, int keyCode) {
+        try {
+            KeyEvent hudKeyEvent = new KeyEvent(action, keyCode);
+            keyEvent(action, keyCode, hudKeyEvent.getUnicodeChar(), hudKeyEvent.getMetaState(), hudKeyEvent);
+        } catch (Throwable error) {
+            Log.e(TAG, "Could not send HUD key " + keyCode, error);
+        }
+    }
+
+    private void setupHudKey(int viewId, final int keyCode) {
+        if (hud_main == null) {
+            return;
+        }
+        View keyView = hud_main.findViewById(viewId);
+        if (keyView == null) {
+            return;
+        }
+        keyView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, android.view.MotionEvent motion) {
+                switch (motion.getActionMasked()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        view.setPressed(true);
+                        sendHudKey(KeyEvent.ACTION_DOWN, keyCode);
+                        return true;
+                    case android.view.MotionEvent.ACTION_UP:
+                    case android.view.MotionEvent.ACTION_CANCEL:
+                        view.setPressed(false);
+                        sendHudKey(KeyEvent.ACTION_UP, keyCode);
+                        return true;
+                    default:
+                        return true;
+                }
+            }
+        });
+    }
+
+    private void setupHudKeyRow() {
+        setupHudKey(R.id.hud_key_tab, KeyEvent.KEYCODE_TAB);
+        setupHudKey(R.id.hud_key_w, KeyEvent.KEYCODE_W);
+        setupHudKey(R.id.hud_key_n, KeyEvent.KEYCODE_N);
+        setupHudKey(R.id.hud_key_2, KeyEvent.KEYCODE_2);
+
+        if (hud_main == null) {
+            return;
+        }
+        View escView = hud_main.findViewById(R.id.hud_key_esc);
+        if (escView != null) {
+            escView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (!handleRuntimeBack()) {
+                        onEventBackPressed();
+                        hideSystemUI();
+                    }
+                }
+            });
+        }
+    }
+
     void MostrarTeclas() {
         if (!TeclasAbertas) {
             runOnUiThread(new Runnable() {
@@ -1058,6 +1118,10 @@ public class SAMP extends com.raiferoleplay.game.game.SAMP implements CustomKeyb
                     hud_f_v = hud_main.findViewById(R.id.hud_f);
                     hud_y_v.setVisibility(View.VISIBLE);
                     hud_f_v.setVisibility(View.VISIBLE);
+                    View keyRowShow = hud_main.findViewById(R.id.hud_key_row);
+                    if (keyRowShow != null) {
+                        keyRowShow.setVisibility(View.VISIBLE);
+                    }
                     TeclasAbertas = true;
                 }
             });
@@ -1075,6 +1139,10 @@ public class SAMP extends com.raiferoleplay.game.game.SAMP implements CustomKeyb
                     hud_f_v = hud_main.findViewById(R.id.hud_f);
                     hud_y_v.setVisibility(View.INVISIBLE);
                     hud_f_v.setVisibility(View.INVISIBLE);
+                    View keyRowHide = hud_main.findViewById(R.id.hud_key_row);
+                    if (keyRowHide != null) {
+                        keyRowHide.setVisibility(View.INVISIBLE);
+                    }
                     TeclasAbertas = false;
                 }
             });
@@ -1535,6 +1603,7 @@ public class SAMP extends com.raiferoleplay.game.game.SAMP implements CustomKeyb
                         //EsconderTeclas();
                     }
                 });
+                setupHudKeyRow();
                 hud_main.findViewById(R.id.hide_chat).setOnClickListener(new View.OnClickListener()
                 {
                     @Override
