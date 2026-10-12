@@ -1,7 +1,8 @@
 package com.xyron.game.launcher.fragments;
 
-import android.content.Intent;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +17,13 @@ import com.xyron.game.launcher.MainActivity;
 import com.xyron.game.launcher.UpdateActivity;
 import com.xyron.game.launcher.util.ButtonAnimator;
 import com.xyron.game.launcher.util.GameDataVerifier;
+import com.xyron.game.launcher.util.SampQueryApi;
 import com.xyron.game.launcher.util.ServerConfigManager;
+import com.xyron.game.launcher.util.Util;
+
+import org.ini4j.Wini;
+
+import java.io.File;
 
 public class HomeFragment extends Fragment {
     private static final int NEXT_STEP_PLAY = 0;
@@ -29,10 +36,18 @@ public class HomeFragment extends Fragment {
     private TextView selectedServerName;
     private TextView selectedServerAddress;
     private TextView selectedServerHint;
+    private TextView statusChip;
+    private TextView playersChip;
+    private TextView pingChip;
+    private TextView playerName;
+    private TextView versionValue;
+    private TextView dataValue;
+    private TextView serverCountValue;
     private TextView readinessTitle;
     private TextView readinessBody;
     private TextView nextStepButton;
     private int nextStepAction = NEXT_STEP_PLAY;
+    private int queryGeneration = 0;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -43,9 +58,17 @@ public class HomeFragment extends Fragment {
         selectedServerName = root.findViewById(R.id.selected_server_name);
         selectedServerAddress = root.findViewById(R.id.selected_server_address);
         selectedServerHint = root.findViewById(R.id.selected_server_hint);
+        statusChip = root.findViewById(R.id.home_status_chip);
+        playersChip = root.findViewById(R.id.home_players_chip);
+        pingChip = root.findViewById(R.id.home_ping_chip);
+        playerName = root.findViewById(R.id.home_player_name);
+        versionValue = root.findViewById(R.id.home_version);
+        dataValue = root.findViewById(R.id.home_data_status);
+        serverCountValue = root.findViewById(R.id.home_server_count);
         readinessTitle = root.findViewById(R.id.home_readiness_title);
         readinessBody = root.findViewById(R.id.home_readiness_body);
         nextStepButton = root.findViewById(R.id.home_next_step_button);
+        TextView editNameButton = root.findViewById(R.id.home_edit_name);
 
         if (playButton != null) {
             playButton.setOnTouchListener(new ButtonAnimator(requireContext(), playButton));
@@ -58,15 +81,13 @@ public class HomeFragment extends Fragment {
 
         if (selectServerButton != null) {
             selectServerButton.setOnTouchListener(new ButtonAnimator(requireContext(), selectServerButton));
-            selectServerButton.setOnClickListener(v -> {
-                if (getActivity() instanceof MainActivity) {
-                    ((MainActivity) getActivity()).openTab(
-                            MainActivity.TAB_SERVERS
-                    );
-                }
-            });
+            selectServerButton.setOnClickListener(v -> openTab(MainActivity.TAB_SERVERS));
         }
 
+        if (editNameButton != null) {
+            editNameButton.setOnTouchListener(new ButtonAnimator(requireContext(), editNameButton));
+            editNameButton.setOnClickListener(v -> openTab(MainActivity.TAB_SETTINGS));
+        }
 
         if (nextStepButton != null) {
             nextStepButton.setOnTouchListener(new ButtonAnimator(requireContext(), nextStepButton));
@@ -83,24 +104,10 @@ public class HomeFragment extends Fragment {
         updateSelectedServer();
     }
 
-    private void configureTabShortcut(View root, int viewId, int tabIndex) {
-        View shortcut = root.findViewById(viewId);
-        if (shortcut == null) {
-            return;
+    private void openTab(int tab) {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).openTab(tab);
         }
-
-        if (getActivity() instanceof MainActivity
-                && !((MainActivity) getActivity()).isTabAllowed(tabIndex)) {
-            shortcut.setVisibility(View.GONE);
-            return;
-        }
-
-        shortcut.setOnTouchListener(new ButtonAnimator(requireContext(), shortcut));
-        shortcut.setOnClickListener(v -> {
-            if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).openTab(tabIndex);
-            }
-        });
     }
 
     private void updateSelectedServer() {
@@ -108,6 +115,9 @@ public class HomeFragment extends Fragment {
         if (context == null || selectedServerName == null || selectedServerAddress == null || selectedServerHint == null) {
             return;
         }
+
+        queryGeneration++;
+        updateSystemInfo(context);
 
         boolean hasGameData = isLauncherRole() || GameDataVerifier.hasRequiredGameData(context);
         boolean hasServers = ServerConfigManager.hasConfiguredServers(context);
@@ -117,8 +127,9 @@ public class HomeFragment extends Fragment {
                 selectServerButton.setText("زیادکردنی سێرڤەر");
             }
             selectedServerName.setText("هیچ سێرڤەرێکی چالاک نییە");
-            selectedServerAddress.setText("دوگمەی «زیادکردنی سێرڤەر» دابگرە");
-            selectedServerHint.setText("دوای پاشەکەوتکردنی IP، لێرە ئامادە دەبێت بۆ بەکارهێنان.");
+            selectedServerAddress.setText("-");
+            setLiveChips("-", "-", "-");
+            selectedServerHint.setText("لە بەشی سێرڤەرەکان IPـیەک زیاد بکە.");
             updateReadiness(hasGameData, false, false);
             return;
         }
@@ -129,8 +140,9 @@ public class HomeFragment extends Fragment {
                 selectServerButton.setText("هەڵبژاردنی سێرڤەر");
             }
             selectedServerName.setText("هیچ سێرڤەرێکی چالاک نییە");
-            selectedServerAddress.setText("IPـیەکی پاشەکەوتکراو لە سێرڤەرەکان هەڵبژێرە");
-            selectedServerHint.setText("سێرڤەری هەڵبژێردراو خۆکارانە لە یارییەکەدا جێبەجێ دەبێت.");
+            selectedServerAddress.setText("-");
+            setLiveChips("-", "-", "-");
+            selectedServerHint.setText("IPـیەکی پاشەکەوتکراو لە سێرڤەرەکان هەڵبژێرە.");
             updateReadiness(hasGameData, true, false);
             return;
         }
@@ -138,12 +150,132 @@ public class HomeFragment extends Fragment {
         if (selectServerButton != null) {
             selectServerButton.setText("گۆڕینی سێرڤەر");
         }
-        selectedServerName.setText("ئامادەیە بۆ یاری");
+        selectedServerName.setText(selectedServer.getAddress());
         selectedServerAddress.setText(selectedServer.getAddress());
-        selectedServerHint.setText(selectedServer.favorite
-                ? "سێرڤەری دڵخوازە و ئامادەیە بۆ کردنەوە لە یارییەکەدا."
-                : "سێرڤەر ئامادەیە بۆ کردنەوە لە یارییەکەدا. بۆ گۆڕین «گۆڕینی سێرڤەر» بەکاربهێنە.");
+        selectedServerHint.setText(selectedServer.favorite ? "سێرڤەری دڵخوازە." : "");
+        setLiveChips("...", "-", "-");
         updateReadiness(hasGameData, true, true);
+        queryLive(selectedServer, queryGeneration);
+    }
+
+    private void setLiveChips(String status, String players, String ping) {
+        if (statusChip != null) {
+            statusChip.setText(status);
+            statusChip.setTextColor(Color.parseColor("#F7F4EE"));
+        }
+        if (playersChip != null) {
+            playersChip.setText(players);
+        }
+        if (pingChip != null) {
+            pingChip.setText(ping);
+        }
+    }
+
+    private void queryLive(ServerConfigManager.ServerOption option, int generation) {
+        final String host = option.host;
+        final int port = option.port;
+        new Thread(() -> {
+            boolean online = false;
+            String name = "";
+            int players = 0;
+            int maxPlayers = 0;
+            int ping = 0;
+
+            SampQueryApi api = new SampQueryApi(host, port, 550);
+            try {
+                long pingValue = api.measurePingMs(1);
+                if (pingValue >= 0) {
+                    online = true;
+                    ping = (int) pingValue;
+                    String[] info = api.getInfo();
+                    if (info != null && info.length > 3) {
+                        players = parseInt(info[1]);
+                        maxPlayers = parseInt(info[2]);
+                        name = info[3] == null ? "" : Util.getStringWithoutColors(info[3]).trim();
+                    }
+                }
+            } catch (Exception ignored) {
+                online = false;
+            } finally {
+                api.close();
+            }
+
+            final boolean fOnline = online;
+            final String fName = name;
+            final int fPlayers = players;
+            final int fMax = maxPlayers;
+            final int fPing = ping;
+
+            if (getActivity() == null) {
+                return;
+            }
+            getActivity().runOnUiThread(() -> {
+                if (!isAdded() || generation != queryGeneration) {
+                    return;
+                }
+                if (!fOnline) {
+                    setLiveChips("ئۆفڵاین", "-", "-");
+                    if (statusChip != null) {
+                        statusChip.setTextColor(Color.parseColor("#F87171"));
+                    }
+                    return;
+                }
+                setLiveChips(
+                        "ئۆنڵاین",
+                        fMax > 0 ? fPlayers + " / " + fMax : "-",
+                        fPing > 0 ? fPing + " ms" : "-"
+                );
+                if (statusChip != null) {
+                    statusChip.setTextColor(Color.parseColor("#4ADE80"));
+                }
+                if (!fName.isEmpty() && selectedServerName != null) {
+                    selectedServerName.setText(fName);
+                }
+            });
+        }, "home-query-" + port).start();
+    }
+
+    private int parseInt(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    private void updateSystemInfo(Context context) {
+        if (versionValue != null) {
+            versionValue.setText("v" + BuildConfig.VERSION_NAME);
+        }
+        if (serverCountValue != null) {
+            serverCountValue.setText(String.valueOf(ServerConfigManager.getAvailableServers(context).size()));
+        }
+        if (dataValue != null) {
+            boolean ok = isLauncherRole() || GameDataVerifier.hasRequiredGameData(context);
+            dataValue.setText(ok ? "دامەزراوە" : "دامەزراو نییە");
+            dataValue.setTextColor(Color.parseColor(ok ? "#4ADE80" : "#F87171"));
+        }
+        if (playerName != null) {
+            String nick = readNickname(context);
+            playerName.setText(nick.isEmpty() ? "-" : nick);
+        }
+    }
+
+    private String readNickname(Context context) {
+        try {
+            File dir = context.getExternalFilesDir(null);
+            if (dir == null) {
+                return "";
+            }
+            File file = new File(dir, "SAMP/settings.ini");
+            if (!file.exists()) {
+                return "";
+            }
+            String value = new Wini(file).get("client", "name");
+            return value == null ? "" : value.trim();
+        } catch (Exception ignored) {
+            return "";
+        }
     }
 
     private void updateReadiness(boolean hasGameData, boolean hasServers, boolean hasSelectedServer) {
@@ -200,12 +332,7 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        if (nextStepAction == NEXT_STEP_ADD_SERVER) {
-            activity.openTab(MainActivity.TAB_SERVERS);
-            return;
-        }
-
-        if (nextStepAction == NEXT_STEP_CHOOSE_SERVER) {
+        if (nextStepAction == NEXT_STEP_ADD_SERVER || nextStepAction == NEXT_STEP_CHOOSE_SERVER) {
             activity.openTab(MainActivity.TAB_SERVERS);
             return;
         }
