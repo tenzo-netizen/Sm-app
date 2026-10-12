@@ -237,7 +237,6 @@
 
         <LinearLayout
             android:id="@+id/nav_item_settings"
-            android:visibility="gone"
             android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -248,7 +247,7 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="@drawable/launcher_nav_button_idle"
-                android:contentDescription="Config"
+                android:contentDescription="ڕێکخستن"
                 android:padding="10dp"
                 android:src="@drawable/ic_settings_off" />
 
@@ -260,7 +259,7 @@
                 android:fontFamily="@font/montserrat_bold"
                 android:gravity="center"
                 android:maxLines="1"
-                android:text="Config"
+                android:text="ڕێکخستن"
                 android:textColor="@color/launcher_text_muted"
                 android:textSize="10.5sp" />
         </LinearLayout>

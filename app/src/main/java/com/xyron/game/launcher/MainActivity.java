@@ -516,7 +516,8 @@ public class MainActivity extends SampActivity {
     private int[] resolveActiveTabs() {
         return new int[] {
                 TAB_HOME,
-                TAB_SERVERS
+                TAB_SERVERS,
+                TAB_SETTINGS
         };
     }
 

@@ -200,63 +200,6 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:background="@drawable/home_server_card_surface"
-                    android:orientation="vertical"
-                    android:padding="18dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/montserrat_bold"
-                        android:text="ناوی یاریزان"
-                        android:textColor="@android:color/white"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:id="@+id/player_name_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="46dp"
-                        android:layout_marginTop="12dp"
-                        android:background="@drawable/launcher_field_surface_dark"
-                        android:ellipsize="end"
-                        android:fontFamily="@font/montserrat_bold"
-                        android:gravity="center_vertical"
-                        android:maxLines="1"
-                        android:paddingStart="14dp"
-                        android:paddingEnd="14dp"
-                        android:text="هیچ ناوێک دیاری نەکراوە"
-                        android:textColor="@color/launcher_text_primary"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:fontFamily="@font/montserrat_medium"
-                        android:text="ئەم ناوە دەچێتە فایلی یارییەکە."
-                        android:textColor="@color/launcher_text_muted"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:id="@+id/button_edit_profile"
-                        android:layout_width="wrap_content"
-                        android:layout_height="42dp"
-                        android:layout_marginTop="12dp"
-                        android:background="@drawable/home_server_select_button"
-                        android:fontFamily="@font/montserrat_bold"
-                        android:gravity="center"
-                        android:minWidth="140dp"
-                        android:paddingStart="18dp"
-                        android:paddingEnd="18dp"
-                        android:text="گۆڕینی ناو"
-                        android:textColor="@android:color/white"
-                        android:textSize="11.5sp" />
-                </LinearLayout>
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

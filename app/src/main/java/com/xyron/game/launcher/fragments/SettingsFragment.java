@@ -1,136 +1,290 @@
 package com.xyron.game.launcher.fragments;
 
-import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.util.Log;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.Spinner;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
-
-import com.xyron.game.BuildConfig;
 import com.xyron.game.R;
 import com.xyron.game.launcher.EntryActivity;
-import com.xyron.game.launcher.SplashActivity;
 import com.xyron.game.launcher.util.ButtonAnimator;
-import com.xyron.game.launcher.util.ServerConfigManager;
 import com.xyron.game.launcher.util.SharedPreferenceCore;
-import com.xyron.game.launcher.util.Util;
-
 import org.ini4j.Wini;
-
 import java.io.File;
 import java.io.IOException;
 
 public class SettingsFragment extends Fragment {
 
+    // Same preferences file the game reads (SAMP.java: HUD_RENDER_PREFS).
+    private static final String RENDER_PREFS = "xyron_hud_render_settings";
+    private static final int FPS_MIN = 30;
+    private static final int FPS_MAX = 120;
+    private static final int[] CHAT_VALUES = {5, 10, 20};
+
     private Wini mWini;
-    private SwitchCompat mKeyboardSwitch;
-    private SwitchCompat mVoipSwitch;
     private TextView nicknameValue;
+    private TextView fpsValue;
+    private SeekBar fpsSeek;
+    private SwitchCompat keyboardSwitch;
+    private final TextView[] chatButtons = new TextView[3];
 
     @Override
-    public View onCreateView(LayoutInflater layoutInflater, ViewGroup viewGroup, Bundle bundle) {
-        View view = layoutInflater.inflate(R.layout.fragment_settings, viewGroup, false);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle bundle) {
+        View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
-        mKeyboardSwitch = view.findViewById(R.id.keyboard_switch);
-        mVoipSwitch = view.findViewById(R.id.voip_switch);
         nicknameValue = view.findViewById(R.id.player_name_value);
-        TextView editProfileButton = view.findViewById(R.id.button_edit_profile);
-        TextView addServerButton = view.findViewById(R.id.button_add_server_shortcut);
-        TextView reinstallButton = view.findViewById(R.id.button_reinstall);
+        fpsValue = view.findViewById(R.id.settings_fps_value);
+        fpsSeek = view.findViewById(R.id.settings_fps_seek);
+        keyboardSwitch = view.findViewById(R.id.keyboard_switch);
+        chatButtons[0] = view.findViewById(R.id.chat_size_small);
+        chatButtons[1] = view.findViewById(R.id.chat_size_medium);
+        chatButtons[2] = view.findViewById(R.id.chat_size_large);
+        TextView editNameButton = view.findViewById(R.id.button_edit_profile);
+        TextView updateDataButton = view.findViewById(R.id.button_update_data);
 
         openSettingsFile();
-        configureChatSpinner(view);
         loadNickname();
+        setupFps();
+        setupChatSize();
+        setupKeyboard();
 
-        if (editProfileButton != null) {
-            editProfileButton.setOnTouchListener(new ButtonAnimator(getContext(), editProfileButton));
-            editProfileButton.setOnClickListener(v -> showNicknameDialog());
+        if (editNameButton != null) {
+            editNameButton.setOnTouchListener(new ButtonAnimator(requireContext(), editNameButton));
+            editNameButton.setOnClickListener(v -> showNicknameDialog());
         }
-
-        if (addServerButton != null) {
-            addServerButton.setOnTouchListener(new ButtonAnimator(getContext(), addServerButton));
-            addServerButton.setOnClickListener(v -> showAddServerDialog());
+        if (updateDataButton != null) {
+            updateDataButton.setOnTouchListener(new ButtonAnimator(requireContext(), updateDataButton));
+            updateDataButton.setOnClickListener(v -> confirmDataUpdate());
         }
-
-        if (reinstallButton != null) {
-            if (isLauncherRole()) {
-                reinstallButton.setText("Abrir download do Game");
-            } else if (isToolsRole()) {
-                reinstallButton.setText("Download fica no Game");
-            }
-            reinstallButton.setOnTouchListener(new ButtonAnimator(getContext(), reinstallButton));
-            reinstallButton.setOnClickListener(v -> handleDataAction());
-        }
-
-        if (mKeyboardSwitch != null) {
-            mKeyboardSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                    new SharedPreferenceCore().setBoolean(
-                            requireContext().getApplicationContext(),
-                            "ANDROID_KEYBOARD",
-                            checked
-                    );
-                    saveIniValue("gui", "androidkeyboard23123", checked);
-                }
-            });
-        }
-
-        if (mVoipSwitch != null) {
-            mVoipSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                    new SharedPreferenceCore().setBoolean(
-                            requireContext().getApplicationContext(),
-                            "VOICE_CHAT_ENABLE",
-                            checked
-                    );
-                    saveIniValue("gui", "VoiceChatEnable", checked);
-                }
-            });
-        }
-
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (mKeyboardSwitch != null) {
-            mKeyboardSwitch.setChecked(new SharedPreferenceCore().getBoolean(
-                    requireContext().getApplicationContext(),
-                    "ANDROID_KEYBOARD"
-            ));
-        }
-        if (mVoipSwitch != null) {
-            mVoipSwitch.setChecked(parseBooleanSetting(
-                    readIniValue("gui", "VoiceChatEnable", "true"),
-                    true
-            ));
-        }
+        openSettingsFile();
         loadNickname();
     }
 
-    private void openSettingsFile() {
-        if (getActivity() == null || getActivity().getExternalFilesDir(null) == null) {
+    // ---------------- FPS ----------------
+
+    private SharedPreferences renderPrefs() {
+        return requireContext().getSharedPreferences(RENDER_PREFS, Context.MODE_PRIVATE);
+    }
+
+    private void setupFps() {
+        if (fpsSeek == null) {
             return;
         }
+        int fps = renderPrefs().getInt("fps_limit", 60);
+        fps = Math.max(FPS_MIN, Math.min(FPS_MAX, fps));
+        fpsSeek.setProgress(fps - FPS_MIN);
+        updateFpsLabel(fps);
 
+        fpsSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                updateFpsLabel(FPS_MIN + progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int value = FPS_MIN + seekBar.getProgress();
+                renderPrefs().edit().putInt("fps_limit", value).apply();
+                writeRenderIni(value);
+            }
+        });
+    }
+
+    private void updateFpsLabel(int fps) {
+        if (fpsValue != null) {
+            fpsValue.setText(fps + " FPS");
+        }
+    }
+
+    private void writeRenderIni(int fps) {
+        if (getContext() == null || requireContext().getExternalFilesDir(null) == null) {
+            return;
+        }
+        File file = new File(requireContext().getExternalFilesDir(null), "SAMP/render_settings.ini");
+        try {
+            File parent = file.getParentFile();
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs();
+            }
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            Wini wini = new Wini(file);
+            wini.put("render", "fps_limit", fps);
+            wini.store();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ---------------- Chat size ----------------
+
+    private void setupChatSize() {
+        int current = 5;
+        try {
+            current = Integer.parseInt(readIniValue("gui", "ChatMaxMessages", "5"));
+        } catch (NumberFormatException ignored) {
+        }
+        int selected = current <= 5 ? 0 : (current <= 10 ? 1 : 2);
+        applyChatSelection(selected);
+
+        for (int i = 0; i < chatButtons.length; i++) {
+            final int index = i;
+            TextView button = chatButtons[i];
+            if (button == null) {
+                continue;
+            }
+            button.setOnClickListener(v -> {
+                saveIniValue("gui", "ChatMaxMessages", CHAT_VALUES[index]);
+                applyChatSelection(index);
+            });
+        }
+    }
+
+    private void applyChatSelection(int selected) {
+        for (int i = 0; i < chatButtons.length; i++) {
+            if (chatButtons[i] != null) {
+                chatButtons[i].setBackgroundResource(
+                        i == selected
+                                ? R.drawable.home_server_select_button
+                                : R.drawable.launcher_field_surface_dark
+                );
+            }
+        }
+    }
+
+    // ---------------- Keyboard ----------------
+
+    private void setupKeyboard() {
+        if (keyboardSwitch == null) {
+            return;
+        }
+        keyboardSwitch.setChecked(new SharedPreferenceCore().getBoolean(
+                requireContext().getApplicationContext(),
+                "ANDROID_KEYBOARD"
+        ));
+        keyboardSwitch.setOnCheckedChangeListener((button, checked) -> {
+            new SharedPreferenceCore().setBoolean(
+                    requireContext().getApplicationContext(),
+                    "ANDROID_KEYBOARD",
+                    checked
+            );
+            saveIniValue("gui", "androidkeyboard23123", checked);
+        });
+    }
+
+    // ---------------- Nickname ----------------
+
+    private void loadNickname() {
+        if (nicknameValue == null) {
+            return;
+        }
+        String nickname = readIniValue("client", "name", "");
+        nicknameValue.setText(nickname.isEmpty() ? "هیچ ناوێک دیاری نەکراوە" : nickname);
+    }
+
+    private void showNicknameDialog() {
+        if (getContext() == null) {
+            return;
+        }
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_name, null, false);
+        EditText input = dialogView.findViewById(R.id.dialog_name_input);
+        TextView cancelButton = dialogView.findViewById(R.id.dialog_name_cancel);
+        TextView saveButton = dialogView.findViewById(R.id.dialog_name_save);
+
+        if (input != null) {
+            input.setText(readIniValue("client", "name", ""));
+            input.setSelection(input.getText() != null ? input.getText().length() : 0);
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).setView(dialogView).create();
+        dialog.setCancelable(true);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        if (cancelButton != null) {
+            cancelButton.setOnTouchListener(new ButtonAnimator(getContext(), cancelButton));
+            cancelButton.setOnClickListener(v -> dialog.dismiss());
+        }
+        if (saveButton != null) {
+            saveButton.setOnTouchListener(new ButtonAnimator(getContext(), saveButton));
+            saveButton.setOnClickListener(v -> {
+                String nickname = input != null && input.getText() != null
+                        ? input.getText().toString().trim()
+                        : "";
+                if (nickname.isEmpty()) {
+                    Toast.makeText(getContext(), "ناوێک بنووسە بۆ پاشەکەوتکردن.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (!saveIniValue("client", "name", nickname)) {
+                    Toast.makeText(getContext(), "نەتوانرا ناو پاشەکەوت بکرێت.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Toast.makeText(getContext(), "ناو پاشەکەوت کرا.", Toast.LENGTH_SHORT).show();
+                loadNickname();
+                dialog.dismiss();
+            });
+        }
+
+        dialog.show();
+        if (input != null) {
+            input.requestFocus();
+        }
+    }
+
+    // ---------------- Game data ----------------
+
+    private void confirmDataUpdate() {
+        if (getContext() == null) {
+            return;
+        }
+        new AlertDialog.Builder(requireContext())
+                .setTitle("نوێکردنەوەی داتا")
+                .setMessage("داتای یاری دەپشکنرێت و نوێ دەکرێتەوە. ئەمە فایلەکانی ئێستات ناسڕێتەوە. بەردەوام دەبیت؟")
+                .setPositiveButton("بەڵێ", (d, w) -> startDataUpdate())
+                .setNegativeButton("نەخێر", null)
+                .show();
+    }
+
+    private void startDataUpdate() {
+        if (getActivity() == null) {
+            return;
+        }
+        // The old code wiped the whole game folder first; the update now runs without deleting it.
+        Intent intent = new Intent(getActivity(), EntryActivity.class);
+        intent.putExtra(EntryActivity.EXTRA_FORCE_UPDATE_DATA, true);
+        startActivity(intent);
+    }
+
+    // ---------------- settings.ini helpers ----------------
+
+    private void openSettingsFile() {
+        if (getActivity() == null || getActivity().getExternalFilesDir(null) == null) {
+            mWini = null;
+            return;
+        }
         File file = new File(getActivity().getExternalFilesDir(null), "SAMP/settings.ini");
         try {
             if (!file.exists()) {
@@ -147,125 +301,10 @@ public class SettingsFragment extends Fragment {
         }
     }
 
-    private void configureChatSpinner(View view) {
-        Spinner spinner = view.findViewById(R.id.chat_count_select);
-        if (spinner == null) {
-            return;
-        }
-
-        String[] sort = {"5", "10", "15", "20"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireActivity(), R.layout.spinner_item, sort);
-        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View selectedView, int index, long id) {
-                int chatCount = 5;
-                switch (index) {
-                    case 1:
-                        chatCount = 10;
-                        break;
-                    case 2:
-                        chatCount = 15;
-                        break;
-                    case 3:
-                        chatCount = 20;
-                        break;
-                    default:
-                        chatCount = 5;
-                        break;
-                }
-
-                Log.d("x1y2z", "chatCount " + chatCount);
-                saveIniValue("gui", "ChatMaxMessages", chatCount);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-            }
-        });
-
-        String message = readIniValue("gui", "ChatMaxMessages", "5");
-        switch (message) {
-            case "10":
-                spinner.setSelection(1);
-                break;
-            case "15":
-                spinner.setSelection(2);
-                break;
-            case "20":
-                spinner.setSelection(3);
-                break;
-            default:
-                spinner.setSelection(0);
-                break;
-        }
-    }
-
-    private void loadNickname() {
-        if (nicknameValue == null) {
-            return;
-        }
-
-        String nickname = readIniValue("client", "name", "");
-        nicknameValue.setText(nickname.isEmpty() ? "Nenhum nome definido" : nickname);
-    }
-
-    private void saveNickname(String nickname) {
-        if (nickname.isEmpty()) {
-            Toast.makeText(getContext(), "Digite um nome para salvar no jogo.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (!saveIniValue("client", "name", nickname)) {
-            Toast.makeText(getContext(), "Nao foi possivel salvar o nome.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Toast.makeText(getContext(), "Nome salvo no launcher e no arquivo do jogo.", Toast.LENGTH_SHORT).show();
-        loadNickname();
-    }
-
-    private void handleDataAction() {
-        if (getActivity() == null) {
-            return;
-        }
-
-        if (isLauncherRole()) {
-            launchGameDataUpdate();
-            return;
-        }
-
-        if (isToolsRole()) {
-            Toast.makeText(getContext(), "Baixe ou reinstale a data pelo APK News RP.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        File dir = new File(getActivity().getExternalFilesDir(null) + "/");
-        Util.delete(dir);
-        Intent intent = new Intent(getActivity(), EntryActivity.class);
-        intent.putExtra(EntryActivity.EXTRA_FORCE_UPDATE_DATA, true);
-        startActivity(intent);
-        getActivity().finish();
-    }
-
-    private void launchGameDataUpdate() {
-        Intent intent = new Intent();
-        intent.setClassName(BuildConfig.XYRON_GAME_PACKAGE, "com.xyron.game.launcher.EntryActivity");
-        intent.putExtra(EntryActivity.EXTRA_FORCE_UPDATE_DATA, true);
-        try {
-            startActivity(intent);
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(getContext(), "Instale o APK News RP para baixar a data.", Toast.LENGTH_LONG).show();
-        }
-    }
-
     private String readIniValue(String section, String key, String fallback) {
         if (mWini == null) {
             return fallback;
         }
-
         String value = mWini.get(section, key);
         return value == null ? fallback : value.trim();
     }
@@ -274,7 +313,6 @@ public class SettingsFragment extends Fragment {
         if (mWini == null) {
             return false;
         }
-
         try {
             mWini.put(section, key, value);
             mWini.store();
@@ -282,161 +320,6 @@ public class SettingsFragment extends Fragment {
         } catch (IOException e) {
             e.printStackTrace();
             return false;
-        }
-    }
-
-    private boolean parseBooleanSetting(String value, boolean fallback) {
-        if (value == null || value.trim().isEmpty()) {
-            return fallback;
-        }
-
-        String normalized = value.trim().toLowerCase();
-        if ("1".equals(normalized) || "true".equals(normalized) || "yes".equals(normalized)) {
-            return true;
-        }
-        if ("0".equals(normalized) || "false".equals(normalized) || "no".equals(normalized)) {
-            return false;
-        }
-        return fallback;
-    }
-
-    private boolean isLauncherRole() {
-        return "launcher".equals(BuildConfig.XYRON_APK_ROLE);
-    }
-
-    private boolean isToolsRole() {
-        return "tools".equals(BuildConfig.XYRON_APK_ROLE);
-    }
-
-    private void showAddServerDialog() {
-        if (getContext() == null) {
-            return;
-        }
-
-        View dialogView = LayoutInflater.from(requireContext()).inflate(
-                R.layout.dialog_add_server,
-                null,
-                false
-        );
-        EditText input = dialogView.findViewById(R.id.dialog_server_input);
-        TextView cancelButton = dialogView.findViewById(R.id.dialog_server_cancel);
-        TextView saveButton = dialogView.findViewById(R.id.dialog_server_save);
-        TextView limitText = dialogView.findViewById(R.id.dialog_server_limit);
-
-        if (limitText != null) {
-            limitText.setText("Voce pode salvar ate "
-                    + ServerConfigManager.getMaxSavedServers()
-                    + " servidores.");
-        }
-
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setView(dialogView)
-                .create();
-        dialog.setCancelable(true);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
-
-        if (cancelButton != null) {
-            cancelButton.setOnTouchListener(new ButtonAnimator(getContext(), cancelButton));
-            cancelButton.setOnClickListener(v -> dialog.dismiss());
-        }
-
-        if (saveButton != null) {
-            saveButton.setOnTouchListener(new ButtonAnimator(getContext(), saveButton));
-            saveButton.setOnClickListener(v -> {
-                String rawAddress = input != null && input.getText() != null
-                        ? input.getText().toString().trim()
-                        : "";
-
-                if (!ServerConfigManager.isValidRawAddress(rawAddress)) {
-                    Toast.makeText(
-                            getContext(),
-                            "Use o formato IP:PORTA, por exemplo 127.0.0.1:7777.",
-                            Toast.LENGTH_LONG
-                    ).show();
-                    return;
-                }
-
-                ServerConfigManager.ServerOption option =
-                        ServerConfigManager.addOrUpdateServer(requireContext(), rawAddress);
-                if (!option.isValid()) {
-                    Toast.makeText(
-                            getContext(),
-                            "Voce pode salvar no maximo "
-                                    + ServerConfigManager.getMaxSavedServers()
-                                    + " servidores.",
-                            Toast.LENGTH_SHORT
-                    ).show();
-                    return;
-                }
-
-                Toast.makeText(
-                        getContext(),
-                        "Servidor adicionado. Ele ja aparece na aba Servidores.",
-                        Toast.LENGTH_SHORT
-                ).show();
-                dialog.dismiss();
-            });
-        }
-
-        dialog.show();
-        if (input != null) {
-            input.requestFocus();
-        }
-    }
-
-    private void showNicknameDialog() {
-        if (getContext() == null) {
-            return;
-        }
-
-        View dialogView = LayoutInflater.from(requireContext()).inflate(
-                R.layout.dialog_edit_name,
-                null,
-                false
-        );
-        EditText input = dialogView.findViewById(R.id.dialog_name_input);
-        TextView cancelButton = dialogView.findViewById(R.id.dialog_name_cancel);
-        TextView saveButton = dialogView.findViewById(R.id.dialog_name_save);
-
-        if (input != null) {
-            String currentNickname = readIniValue("client", "name", "");
-            input.setText(currentNickname);
-            input.setSelection(input.getText() != null ? input.getText().length() : 0);
-        }
-
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setView(dialogView)
-                .create();
-        dialog.setCancelable(true);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
-
-        if (cancelButton != null) {
-            cancelButton.setOnTouchListener(new ButtonAnimator(getContext(), cancelButton));
-            cancelButton.setOnClickListener(v -> dialog.dismiss());
-        }
-
-        if (saveButton != null) {
-            saveButton.setOnTouchListener(new ButtonAnimator(getContext(), saveButton));
-            saveButton.setOnClickListener(v -> {
-                String nickname = input != null && input.getText() != null
-                        ? input.getText().toString().trim()
-                        : "";
-                if (nickname.isEmpty()) {
-                    Toast.makeText(getContext(), "Digite um nome para salvar no jogo.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                saveNickname(nickname);
-                dialog.dismiss();
-            });
-        }
-
-        dialog.show();
-        if (input != null) {
-            input.requestFocus();
         }
     }
 }
