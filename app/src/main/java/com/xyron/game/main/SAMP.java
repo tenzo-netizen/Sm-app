@@ -1057,52 +1057,100 @@ public class SAMP extends com.raiferoleplay.game.game.SAMP implements CustomKeyb
         }
     }
 
-    private void setupHudKey(int viewId, final int keyCode) {
-        if (hud_main == null) {
-            return;
-        }
-        View keyView = hud_main.findViewById(viewId);
-        if (keyView == null) {
-            return;
-        }
-        keyView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, android.view.MotionEvent motion) {
-                switch (motion.getActionMasked()) {
-                    case android.view.MotionEvent.ACTION_DOWN:
-                        view.setPressed(true);
-                        sendHudKey(KeyEvent.ACTION_DOWN, keyCode);
-                        return true;
-                    case android.view.MotionEvent.ACTION_UP:
-                    case android.view.MotionEvent.ACTION_CANCEL:
-                        view.setPressed(false);
-                        sendHudKey(KeyEvent.ACTION_UP, keyCode);
-                        return true;
-                    default:
-                        return true;
-                }
-            }
-        });
-    }
+    // Key bar. Edit this list to add/remove/reorder keys.
+    // mode: 0 = normal keyboard key (held while touched), 1 = native button (onClickButton), 2 = ESC / pause menu
+    private static final Object[][] HUD_KEYS = {
+            {"TAB", KeyEvent.KEYCODE_TAB, 0},
+            {"ALT", KeyEvent.KEYCODE_ALT_LEFT, 0},
+            {"SPC", KeyEvent.KEYCODE_SPACE, 0},
+            {"SHIFT", KeyEvent.KEYCODE_SHIFT_LEFT, 0},
+            {"W", KeyEvent.KEYCODE_W, 0},
+            {"Y", 1, 1},
+            {"N", KeyEvent.KEYCODE_N, 0},
+            {"F", 2, 1},
+            {"C", KeyEvent.KEYCODE_C, 0},
+            {"H", KeyEvent.KEYCODE_H, 0},
+            {"2", KeyEvent.KEYCODE_2, 0},
+            {"ESC", 0, 2}
+    };
 
     private void setupHudKeyRow() {
-        setupHudKey(R.id.hud_key_tab, KeyEvent.KEYCODE_TAB);
-        setupHudKey(R.id.hud_key_w, KeyEvent.KEYCODE_W);
-        setupHudKey(R.id.hud_key_n, KeyEvent.KEYCODE_N);
-        setupHudKey(R.id.hud_key_2, KeyEvent.KEYCODE_2);
-
         if (hud_main == null) {
             return;
         }
-        View escView = hud_main.findViewById(R.id.hud_key_esc);
-        if (escView != null) {
-            escView.setOnClickListener(new View.OnClickListener() {
+        android.widget.LinearLayout row = hud_main.findViewById(R.id.hud_key_row);
+        final View scroll = hud_main.findViewById(R.id.hud_key_scroll);
+        final TextView toggle = hud_main.findViewById(R.id.hud_key_toggle);
+        if (row == null) {
+            return;
+        }
+
+        final float density = getResources().getDisplayMetrics().density;
+        row.removeAllViews();
+
+        for (Object[] def : HUD_KEYS) {
+            final String label = (String) def[0];
+            final int code = (Integer) def[1];
+            final int mode = (Integer) def[2];
+
+            TextView key = new TextView(this);
+            key.setText(label);
+            key.setTextColor(0xFFFFFFFF);
+            key.setTextSize(12);
+            key.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            key.setGravity(android.view.Gravity.CENTER);
+            key.setBackgroundResource(R.drawable.hud_btn_bg);
+            key.setMinWidth((int) (50 * density));
+            key.setPadding((int) (10 * density), 0, (int) (10 * density), 0);
+            android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, (int) (38 * density));
+            lp.setMarginEnd((int) (4 * density));
+            key.setLayoutParams(lp);
+
+            key.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, android.view.MotionEvent motion) {
+                    switch (motion.getActionMasked()) {
+                        case android.view.MotionEvent.ACTION_DOWN:
+                            view.setPressed(true);
+                            if (mode == 0) {
+                                sendHudKey(KeyEvent.ACTION_DOWN, code);
+                            }
+                            return true;
+                        case android.view.MotionEvent.ACTION_UP:
+                            view.setPressed(false);
+                            if (mode == 0) {
+                                sendHudKey(KeyEvent.ACTION_UP, code);
+                            } else if (mode == 1) {
+                                onClickButton(code);
+                            } else if (mode == 2) {
+                                if (!handleRuntimeBack()) {
+                                    onEventBackPressed();
+                                    hideSystemUI();
+                                }
+                            }
+                            return true;
+                        case android.view.MotionEvent.ACTION_CANCEL:
+                            view.setPressed(false);
+                            if (mode == 0) {
+                                sendHudKey(KeyEvent.ACTION_UP, code);
+                            }
+                            return true;
+                        default:
+                            return true;
+                    }
+                }
+            });
+            row.addView(key);
+        }
+
+        if (toggle != null && scroll != null) {
+            toggle.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (!handleRuntimeBack()) {
-                        onEventBackPressed();
-                        hideSystemUI();
-                    }
+                    boolean show = scroll.getVisibility() != View.VISIBLE;
+                    scroll.setVisibility(show ? View.VISIBLE : View.GONE);
+                    toggle.setText(show ? "<<" : ">>");
                 }
             });
         }
@@ -1116,9 +1164,7 @@ public class SAMP extends com.raiferoleplay.game.game.SAMP implements CustomKeyb
                     if (hud_main == null) return;
                     hud_y_v = hud_main.findViewById(R.id.hud_y);
                     hud_f_v = hud_main.findViewById(R.id.hud_f);
-                    hud_y_v.setVisibility(View.VISIBLE);
-                    hud_f_v.setVisibility(View.VISIBLE);
-                    View keyRowShow = hud_main.findViewById(R.id.hud_key_row);
+                    View keyRowShow = hud_main.findViewById(R.id.hud_key_bar);
                     if (keyRowShow != null) {
                         keyRowShow.setVisibility(View.VISIBLE);
                     }
@@ -1139,7 +1185,7 @@ public class SAMP extends com.raiferoleplay.game.game.SAMP implements CustomKeyb
                     hud_f_v = hud_main.findViewById(R.id.hud_f);
                     hud_y_v.setVisibility(View.INVISIBLE);
                     hud_f_v.setVisibility(View.INVISIBLE);
-                    View keyRowHide = hud_main.findViewById(R.id.hud_key_row);
+                    View keyRowHide = hud_main.findViewById(R.id.hud_key_bar);
                     if (keyRowHide != null) {
                         keyRowHide.setVisibility(View.INVISIBLE);
                     }

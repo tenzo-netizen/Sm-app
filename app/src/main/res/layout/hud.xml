@@ -421,7 +421,7 @@
         android:layout_marginStart="2dp"
         android:layout_marginTop="140dp"
         android:clickable="true"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintStart_toEndOf="@+id/btn_weapon_wheel"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -457,7 +457,7 @@
         android:layout_gravity="bottom"
         android:layout_marginStart="2dp"
         android:clickable="true"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintStart_toEndOf="@+id/hud_y"
         app:layout_constraintTop_toTopOf="@+id/hud_y">
 
@@ -485,129 +485,44 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
-        android:id="@+id/hud_key_row"
+        android:id="@+id/hud_key_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
         android:layout_marginTop="4dp"
+        android:gravity="center_vertical"
+        android:layoutDirection="ltr"
         android:orientation="horizontal"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_0">
 
-        <FrameLayout
-            android:id="@+id/hud_key_tab"
-            android:layout_width="@dimen/_33sdp"
-            android:layout_height="@dimen/_26sdp"
-            android:layout_marginEnd="3dp"
-            android:clickable="true">
+        <TextView
+            android:id="@+id/hud_key_toggle"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:layout_marginEnd="4dp"
+            android:background="@drawable/hud_btn_bg"
+            android:fontFamily="@font/roboto_black"
+            android:gravity="center"
+            android:minWidth="44dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:text="&lt;&lt;"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
 
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="fitXY"
-                app:srcCompat="@drawable/hud_btn_bg" />
+        <HorizontalScrollView
+            android:id="@+id/hud_key_scroll"
+            android:layout_width="380dp"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
 
-            <TextView
+            <LinearLayout
+                android:id="@+id/hud_key_row"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:fontFamily="@font/roboto_black"
-                android:text="TAB"
-                android:textColor="#F59E0B"
-                android:textSize="11sp" />
-        </FrameLayout>
-
-        <FrameLayout
-            android:id="@+id/hud_key_w"
-            android:layout_width="@dimen/_33sdp"
-            android:layout_height="@dimen/_26sdp"
-            android:layout_marginEnd="3dp"
-            android:clickable="true">
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="fitXY"
-                app:srcCompat="@drawable/hud_btn_bg" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:fontFamily="@font/roboto_black"
-                android:text="W"
-                android:textColor="#F59E0B"
-                android:textSize="11sp" />
-        </FrameLayout>
-
-        <FrameLayout
-            android:id="@+id/hud_key_n"
-            android:layout_width="@dimen/_33sdp"
-            android:layout_height="@dimen/_26sdp"
-            android:layout_marginEnd="3dp"
-            android:clickable="true">
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="fitXY"
-                app:srcCompat="@drawable/hud_btn_bg" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:fontFamily="@font/roboto_black"
-                android:text="N"
-                android:textColor="#F59E0B"
-                android:textSize="11sp" />
-        </FrameLayout>
-
-        <FrameLayout
-            android:id="@+id/hud_key_2"
-            android:layout_width="@dimen/_33sdp"
-            android:layout_height="@dimen/_26sdp"
-            android:layout_marginEnd="3dp"
-            android:clickable="true">
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="fitXY"
-                app:srcCompat="@drawable/hud_btn_bg" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:fontFamily="@font/roboto_black"
-                android:text="2"
-                android:textColor="#F59E0B"
-                android:textSize="11sp" />
-        </FrameLayout>
-
-        <FrameLayout
-            android:id="@+id/hud_key_esc"
-            android:layout_width="@dimen/_33sdp"
-            android:layout_height="@dimen/_26sdp"
-            android:layout_marginEnd="3dp"
-            android:clickable="true">
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="fitXY"
-                app:srcCompat="@drawable/hud_btn_bg" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:fontFamily="@font/roboto_black"
-                android:text="ESC"
-                android:textColor="#F59E0B"
-                android:textSize="11sp" />
-        </FrameLayout>
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
     </LinearLayout>
 
     <ImageView
