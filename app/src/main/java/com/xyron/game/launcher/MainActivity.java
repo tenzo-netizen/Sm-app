@@ -185,9 +185,7 @@ public class MainActivity extends SampActivity {
         }
 
         if (preparation.requiresDataUpdate) {
-            Intent intent = new Intent(this, UpdateActivity.class);
-            intent.putExtra("mode", UpdateActivity.UpdateMode.GameDataUpdate.name());
-            startActivity(intent);
+            startActivity(new Intent(this, DataInstallActivity.class));
             finish();
             return;
         }

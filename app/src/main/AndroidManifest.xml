@@ -79,6 +79,13 @@
             android:exported="true"/>
 
         <activity
+            android:name=".launcher.DataInstallActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"/>
+
+        <activity
             android:name=".launcher.UpdateActivity"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"/>

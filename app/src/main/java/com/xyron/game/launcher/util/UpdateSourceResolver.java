@@ -18,9 +18,9 @@ public final class UpdateSourceResolver {
     private static final String CONFIG_ASSET_PATH = "update_sources.json";
     private static final String DEFAULT_DATA_VARIANT_ID = "lite";
     private static final String DEFAULT_CLIENT_CONFIG_URL =
-            "https://rp.goldcityrolrplay.space/dowloandoficial/client_config.json";
+            "";
     private static final String DEFAULT_FILES_BASE_URL =
-            "https://rp.goldcityrolrplay.space/dowloandoficial/files";
+            "";
 
     private UpdateSourceResolver() {
     }
