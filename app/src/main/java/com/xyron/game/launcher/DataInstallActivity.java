@@ -1,8 +1,12 @@
 package com.xyron.game.launcher;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.util.Base64;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -98,7 +102,7 @@ public class DataInstallActivity extends AppCompatActivity {
         root.addView(title);
 
         TextView info = new TextView(this);
-        info.setText("قەبارەی فایلەکە نزیکەی ١.٥ گیگابایتە و پێویستی بە ٤ گیگابایت شوێنی بەتاڵە. ئەپەکە کراوە بهێڵەرەوە تا تەواو دەبێت.");
+        info.setText("قەبارەی فایلەکە نزیکەی ١.٥ گیگابایتە و پێویستی بە ٤ گیگابایت شوێنی بەتاڵە. ئەپەکە کراوە بهێڵەرەوە. ئەگەر داگرتنی ئۆتۆماتیک کاری نەکرد، لە براوزەر فایلەکە دابگرە و دووبارە دەستپێبکە، ئەپەکە خۆی لە Download دەیدۆزێتەوە.");
         info.setTextColor(Color.parseColor("#8FA1AE"));
         info.setTextSize(13);
         info.setGravity(Gravity.CENTER);
@@ -136,6 +140,19 @@ public class DataInstallActivity extends AppCompatActivity {
             }
         });
         root.addView(actionButton, new LinearLayout.LayoutParams(dp(220), dp(48)));
+
+        Button browserButton = new Button(this);
+        browserButton.setAllCaps(false);
+        browserButton.setText("کردنەوە لە براوزەر");
+        browserButton.setOnClickListener(v -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(PAGE_URL)));
+            } catch (Exception ignored) {
+            }
+        });
+        LinearLayout.LayoutParams browserParams = new LinearLayout.LayoutParams(dp(220), dp(44));
+        browserParams.topMargin = dp(8);
+        root.addView(browserButton, browserParams);
 
         closeButton = new Button(this);
         closeButton.setAllCaps(false);
@@ -199,29 +216,39 @@ public class DataInstallActivity extends AppCompatActivity {
 
             File archive = new File(base, ARCHIVE_NAME);
             File part = new File(base, ARCHIVE_NAME + ".part");
+            File manual = archive.exists() ? null : findManualArchive();
 
             long free = base.getUsableSpace();
-            long needed = archive.exists() ? (long) (2.5 * GB) : 4 * GB;
+            long needed = (archive.exists() || manual != null) ? (long) (2.5 * GB) : 4 * GB;
             if (free < needed) {
                 finishWork("شوێن بەس نییە",
                         "پێویستە لانیکەم " + (needed / GB) + " گیگابایت بەتاڵ بێت. ئێستا " + (free / (1024 * 1024)) + " مێگابایت ماوە.");
                 return;
             }
 
-            if (!archive.exists()) {
+            File source;
+            if (archive.exists()) {
+                source = archive;
+            } else if (manual != null) {
+                source = manual;
+                setStatus("فایلی داگیراو دۆزرایەوە", manual.getName(), 0);
+            } else {
                 setStatus("دۆزینەوەی لینکی داگرتن...", "", 0);
                 String direct = resolveDirectUrl();
                 download(direct, part);
                 if (!part.renameTo(archive)) {
                     throw new IOException("rename failed");
                 }
+                source = archive;
             }
 
-            extract(archive, base);
+            extract(source, base);
 
             if (GameDataVerifier.hasRequiredGameData(this)) {
-                //noinspection ResultOfMethodCallIgnored
-                archive.delete();
+                if (source == archive) {
+                    //noinspection ResultOfMethodCallIgnored
+                    archive.delete();
+                }
                 runOnUiThread(() -> progressBar.setProgress(1000));
                 finishWork("تەواو بوو ✅", "داتای یاری دامەزرا. دەتوانیت بگەڕێیتەوە و یاری بکەیت.");
             } else {
@@ -250,25 +277,79 @@ public class DataInstallActivity extends AppCompatActivity {
         connection.setConnectTimeout(20000);
         connection.setReadTimeout(30000);
         connection.setRequestProperty("User-Agent", USER_AGENT);
+        connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,*/*;q=0.8");
+        connection.setRequestProperty("Accept-Language", "en-US,en;q=0.9");
         connection.setInstanceFollowRedirects(true);
-        try (InputStream in = new BufferedInputStream(connection.getInputStream())) {
+
+        int code = connection.getResponseCode();
+        String html;
+        try (InputStream in = new BufferedInputStream(code >= 400 ? connection.getErrorStream() : connection.getInputStream())) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             byte[] buffer = new byte[16384];
             int read;
-            while ((read = in.read(buffer)) != -1 && out.size() < 3 * 1024 * 1024) {
+            while ((read = in.read(buffer)) != -1 && out.size() < 4 * 1024 * 1024) {
                 out.write(buffer, 0, read);
             }
-            String html = out.toString("UTF-8");
-            Matcher matcher = Pattern
-                    .compile("https?://download[0-9]*\\.mediafire\\.com/[^\"'\\s<>]+")
-                    .matcher(html);
-            if (matcher.find()) {
-                return matcher.group().replace("&amp;", "&");
-            }
+            html = out.toString("UTF-8");
         } finally {
             connection.disconnect();
         }
-        throw new IOException("لینکی داگرتن نەدۆزرایەوە. لەوانەیە فایلەکە سڕابێتەوە یان MediaFire ڕێگە نەدات.");
+
+        // 1) MediaFire hides the link as base64 in data-scrambled-url
+        Matcher scrambled = Pattern.compile("data-scrambled-url=\"([^\"]+)\"").matcher(html);
+        while (scrambled.find()) {
+            try {
+                String decoded = new String(Base64.decode(scrambled.group(1), Base64.DEFAULT), "UTF-8").trim();
+                if (decoded.startsWith("http")) {
+                    return decoded;
+                }
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+
+        // 2) normal href (also protocol-relative //download...)
+        Matcher href = Pattern
+                .compile("href=\"((?:https?:)?//download[0-9]*\\.mediafire\\.com/[^\"]+)\"")
+                .matcher(html);
+        if (href.find()) {
+            String url = href.group(1).replace("&amp;", "&");
+            return url.startsWith("//") ? "https:" + url : url;
+        }
+
+        // 3) any direct link in the page
+        Matcher any = Pattern
+                .compile("https?://download[0-9]*\\.mediafire\\.com/[^\"'\\s<>]+")
+                .matcher(html);
+        if (any.find()) {
+            return any.group().replace("&amp;", "&");
+        }
+
+        throw new IOException("لینکی داگرتن نەدۆزرایەوە (HTTP " + code + "، " + html.length()
+                + " بایت). دوگمەی «کردنەوە لە براوزەر» بەکاربهێنە، فایلەکە دابگرە، پاشان دووبارە دەستپێبکە.");
+    }
+
+    // A .7z already downloaded by the browser (Download folder) is used instead of downloading again.
+    private File findManualArchive() {
+        try {
+            File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            File[] files = downloads == null ? null : downloads.listFiles();
+            if (files == null) {
+                return null;
+            }
+            File best = null;
+            for (File file : files) {
+                String name = file.getName().toLowerCase();
+                if (file.isFile() && name.endsWith(".7z") && name.contains("data") && name.contains("gta")
+                        && file.length() > GB / 2) {
+                    if (best == null || file.length() > best.length()) {
+                        best = file;
+                    }
+                }
+            }
+            return best;
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     // ---------- Download (resumable) ----------
