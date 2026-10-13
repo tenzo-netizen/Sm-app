@@ -6,10 +6,14 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Base64;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -34,6 +38,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -324,8 +330,95 @@ public class DataInstallActivity extends AppCompatActivity {
             return any.group().replace("&amp;", "&");
         }
 
+        // 4) link escaped inside a script (https:\/\/download...)
+        Matcher escaped = Pattern
+                .compile("https?:\\\\?/\\\\?/download[0-9]*\\.mediafire\\.com[^\"'\\s<>]+")
+                .matcher(html);
+        if (escaped.find()) {
+            return escaped.group().replace("\\/", "/").replace("&amp;", "&");
+        }
+
+        // 5) let a real WebView run the page's JavaScript and read the download button
+        String viaWebView = resolveViaWebView();
+        if (viaWebView != null) {
+            return viaWebView;
+        }
+
         throw new IOException("لینکی داگرتن نەدۆزرایەوە (HTTP " + code + "، " + html.length()
                 + " بایت). دوگمەی «کردنەوە لە براوزەر» بەکاربهێنە، فایلەکە دابگرە، پاشان دووبارە دەستپێبکە.");
+    }
+
+    private static final String READ_LINK_JS =
+            "(function(){var a=document.getElementById('downloadButton')"
+                    + "||document.querySelector('a[aria-label=\"Download file\"]');"
+                    + "if(!a){return '';}"
+                    + "var h=a.getAttribute('href')||'';"
+                    + "if(h.indexOf('://download')>0){return h;}"
+                    + "var s=a.getAttribute('data-scrambled-url');"
+                    + "if(s){try{return atob(s);}catch(e){}}"
+                    + "return '';})()";
+
+    private String resolveViaWebView() {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final String[] result = new String[1];
+        final WebView[] holder = new WebView[1];
+        final Handler handler = new Handler(Looper.getMainLooper());
+
+        runOnUiThread(() -> {
+            try {
+                final WebView web = new WebView(DataInstallActivity.this);
+                holder[0] = web;
+                web.getSettings().setJavaScriptEnabled(true);
+                web.getSettings().setDomStorageEnabled(true);
+                web.getSettings().setUserAgentString(USER_AGENT);
+
+                final int[] attempts = {0};
+                final boolean[] started = {false};
+                final Runnable[] poll = new Runnable[1];
+                poll[0] = () -> web.evaluateJavascript(READ_LINK_JS, value -> {
+                    String link = value == null ? "" : value.replace("\"", "")
+                            .replace("\\u0026", "&").replace("\\/", "/").trim();
+                    if (link.startsWith("http") && link.contains("://download")) {
+                        result[0] = link;
+                        latch.countDown();
+                    } else if (++attempts[0] > 40) {
+                        latch.countDown();
+                    } else {
+                        handler.postDelayed(poll[0], 500);
+                    }
+                });
+
+                web.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        if (!started[0]) {
+                            started[0] = true;
+                            handler.postDelayed(poll[0], 800);
+                        }
+                    }
+                });
+                web.loadUrl(PAGE_URL);
+            } catch (Throwable error) {
+                latch.countDown();
+            }
+        });
+
+        try {
+            latch.await(35, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
+
+        runOnUiThread(() -> {
+            if (holder[0] != null) {
+                try {
+                    holder[0].stopLoading();
+                    holder[0].destroy();
+                } catch (Throwable ignored) {
+                }
+            }
+        });
+        return result[0];
     }
 
     // A .7z already downloaded by the browser (Download folder) is used instead of downloading again.
