@@ -10,11 +10,15 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
 import android.view.Gravity;
+import android.view.ViewGroup;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.CookieManager;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -62,6 +66,12 @@ public class DataInstallActivity extends AppCompatActivity {
     private Button actionButton;
     private Button closeButton;
 
+    private volatile String pendingUrl;
+    private volatile String pendingCookie;
+    private volatile String pendingUa;
+    private FrameLayout webOverlay;
+    private WebView webView;
+
     private volatile boolean running = false;
     private volatile boolean cancelled = false;
     private Thread worker;
@@ -79,9 +89,73 @@ public class DataInstallActivity extends AppCompatActivity {
         updateButtons();
     }
 
+    private void showWebOverlay() {
+        if (webOverlay == null) {
+            webOverlay = new FrameLayout(this);
+            webOverlay.setBackgroundColor(Color.BLACK);
+
+            LinearLayout column = new LinearLayout(this);
+            column.setOrientation(LinearLayout.VERTICAL);
+
+            Button closeWeb = new Button(this);
+            closeWeb.setAllCaps(false);
+            closeWeb.setText("داخستنی پەڕە");
+            closeWeb.setOnClickListener(v -> hideWebOverlay());
+            column.addView(closeWeb, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
+
+            webView = new WebView(this);
+            WebSettings settings = webView.getSettings();
+            settings.setJavaScriptEnabled(true);
+            settings.setDomStorageEnabled(true);
+            webView.setWebViewClient(new WebViewClient());
+            webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
+                pendingUrl = url;
+                pendingUa = userAgent;
+                pendingCookie = CookieManager.getInstance().getCookie(url);
+                hideWebOverlay();
+                startWork();
+            });
+            column.addView(webView, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+
+            webOverlay.addView(column, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            addContentView(webOverlay, new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            webView.loadUrl(PAGE_URL);
+        }
+        webOverlay.setVisibility(View.VISIBLE);
+    }
+
+    private void hideWebOverlay() {
+        if (webOverlay != null) {
+            webOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (webOverlay != null && webOverlay.getVisibility() == View.VISIBLE) {
+            if (webView != null && webView.canGoBack()) {
+                webView.goBack();
+            } else {
+                hideWebOverlay();
+            }
+            return;
+        }
+        super.onBackPressed();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (webView != null) {
+            try {
+                webView.destroy();
+            } catch (Throwable ignored) {
+            }
+        }
         if (isFinishing()) {
             cancelled = true;
         }
@@ -146,6 +220,18 @@ public class DataInstallActivity extends AppCompatActivity {
             }
         });
         root.addView(actionButton, new LinearLayout.LayoutParams(dp(220), dp(48)));
+
+        Button inAppButton = new Button(this);
+        inAppButton.setAllCaps(false);
+        inAppButton.setText("داگرتن لە ڕێگەی MediaFire");
+        inAppButton.setOnClickListener(v -> {
+            if (!running) {
+                showWebOverlay();
+            }
+        });
+        LinearLayout.LayoutParams inAppParams = new LinearLayout.LayoutParams(dp(220), dp(44));
+        inAppParams.topMargin = dp(8);
+        root.addView(inAppButton, inAppParams);
 
         Button browserButton = new Button(this);
         browserButton.setAllCaps(false);
@@ -239,9 +325,22 @@ public class DataInstallActivity extends AppCompatActivity {
                 source = manual;
                 setStatus("فایلی داگیراو دۆزرایەوە", manual.getName(), 0);
             } else {
-                setStatus("دۆزینەوەی لینکی داگرتن...", "", 0);
-                String direct = resolveDirectUrl();
-                download(direct, part);
+                String direct = pendingUrl;
+                String cookie = pendingCookie;
+                String agent = pendingUa;
+                pendingUrl = null;
+                if (direct == null) {
+                    setStatus("دۆزینەوەی لینکی داگرتن...", "", 0);
+                    try {
+                        direct = resolveDirectUrl();
+                    } catch (IOException e) {
+                        runOnUiThread(this::showWebOverlay);
+                        finishWork("پەڕەی MediaFire کرایەوە",
+                                "لە پەڕەکەدا دوگمەی Download دابگرە، ئەپەکە خۆی داگرتنەکە دەست پێدەکات.");
+                        return;
+                    }
+                }
+                download(direct, part, cookie, agent);
                 if (!part.renameTo(archive)) {
                     throw new IOException("rename failed");
                 }
@@ -338,87 +437,8 @@ public class DataInstallActivity extends AppCompatActivity {
             return escaped.group().replace("\\/", "/").replace("&amp;", "&");
         }
 
-        // 5) let a real WebView run the page's JavaScript and read the download button
-        String viaWebView = resolveViaWebView();
-        if (viaWebView != null) {
-            return viaWebView;
-        }
-
         throw new IOException("لینکی داگرتن نەدۆزرایەوە (HTTP " + code + "، " + html.length()
                 + " بایت). دوگمەی «کردنەوە لە براوزەر» بەکاربهێنە، فایلەکە دابگرە، پاشان دووبارە دەستپێبکە.");
-    }
-
-    private static final String READ_LINK_JS =
-            "(function(){var a=document.getElementById('downloadButton')"
-                    + "||document.querySelector('a[aria-label=\"Download file\"]');"
-                    + "if(!a){return '';}"
-                    + "var h=a.getAttribute('href')||'';"
-                    + "if(h.indexOf('://download')>0){return h;}"
-                    + "var s=a.getAttribute('data-scrambled-url');"
-                    + "if(s){try{return atob(s);}catch(e){}}"
-                    + "return '';})()";
-
-    private String resolveViaWebView() {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final String[] result = new String[1];
-        final WebView[] holder = new WebView[1];
-        final Handler handler = new Handler(Looper.getMainLooper());
-
-        runOnUiThread(() -> {
-            try {
-                final WebView web = new WebView(DataInstallActivity.this);
-                holder[0] = web;
-                web.getSettings().setJavaScriptEnabled(true);
-                web.getSettings().setDomStorageEnabled(true);
-                web.getSettings().setUserAgentString(USER_AGENT);
-
-                final int[] attempts = {0};
-                final boolean[] started = {false};
-                final Runnable[] poll = new Runnable[1];
-                poll[0] = () -> web.evaluateJavascript(READ_LINK_JS, value -> {
-                    String link = value == null ? "" : value.replace("\"", "")
-                            .replace("\\u0026", "&").replace("\\/", "/").trim();
-                    if (link.startsWith("http") && link.contains("://download")) {
-                        result[0] = link;
-                        latch.countDown();
-                    } else if (++attempts[0] > 40) {
-                        latch.countDown();
-                    } else {
-                        handler.postDelayed(poll[0], 500);
-                    }
-                });
-
-                web.setWebViewClient(new WebViewClient() {
-                    @Override
-                    public void onPageFinished(WebView view, String url) {
-                        if (!started[0]) {
-                            started[0] = true;
-                            handler.postDelayed(poll[0], 800);
-                        }
-                    }
-                });
-                web.loadUrl(PAGE_URL);
-            } catch (Throwable error) {
-                latch.countDown();
-            }
-        });
-
-        try {
-            latch.await(35, TimeUnit.SECONDS);
-        } catch (InterruptedException ignored) {
-            Thread.currentThread().interrupt();
-        }
-
-        runOnUiThread(() -> {
-            if (holder[0] != null) {
-                try {
-                    holder[0].stopLoading();
-                    holder[0].destroy();
-                } catch (Throwable ignored) {
-                }
-            }
-        });
-        return result[0];
     }
 
     // A .7z already downloaded by the browser (Download folder) is used instead of downloading again.
@@ -456,13 +476,16 @@ public class DataInstallActivity extends AppCompatActivity {
         }
     }
 
-    private void download(String directUrl, File part) throws IOException {
+    private void download(String directUrl, File part, String cookie, String agent) throws IOException {
         long existing = part.exists() ? part.length() : 0L;
 
         HttpURLConnection connection = (HttpURLConnection) new URL(directUrl).openConnection();
         connection.setConnectTimeout(20000);
         connection.setReadTimeout(30000);
-        connection.setRequestProperty("User-Agent", USER_AGENT);
+        connection.setRequestProperty("User-Agent", agent != null ? agent : USER_AGENT);
+        if (cookie != null && !cookie.isEmpty()) {
+            connection.setRequestProperty("Cookie", cookie);
+        }
         if (existing > 0) {
             connection.setRequestProperty("Range", "bytes=" + existing + "-");
         }
