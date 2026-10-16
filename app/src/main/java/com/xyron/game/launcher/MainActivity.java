@@ -20,19 +20,12 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import com.xyron.game.R;
 import com.xyron.game.BuildConfig;
 import com.xyron.game.launcher.data.Config;
-import com.xyron.game.launcher.fragments.CreditsFragment;
-import com.xyron.game.launcher.fragments.DonateFragment;
-import com.xyron.game.launcher.fragments.EditorFragment;
 import com.xyron.game.launcher.fragments.HomeFragment;
-import com.xyron.game.launcher.fragments.HostFragment;
-import com.xyron.game.launcher.fragments.HostFilesFragment;
 import com.xyron.game.launcher.fragments.ServersFragment;
 import com.xyron.game.launcher.fragments.SettingsFragment;
-import com.xyron.game.launcher.fragments.WorkbenchFragment;
 import com.xyron.game.launcher.util.ButtonAnimator;
 import com.xyron.game.launcher.util.ConfigValidator;
 import com.xyron.game.launcher.util.GameDataVerifier;
-import com.xyron.game.launcher.util.HostShellEngine;
 import com.xyron.game.launcher.util.SampQueryApi;
 import com.xyron.game.launcher.util.SAMPServerInfo;
 import com.xyron.game.launcher.util.ServerConfigManager;
@@ -122,7 +115,7 @@ public class MainActivity extends SampActivity {
                 ServerConfigManager.getAvailableServers(getApplicationContext());
         if (availableServers.isEmpty()) {
             return LaunchPreparation.blocked(
-                    "Adicione um servidor em Configuracoes antes de abrir o jogo.",
+                    "پێش کردنەوەی یاری، سێرڤەرێک لە بەشی سێرڤەرەکان زیاد بکە.",
                     TAB_SETTINGS
             );
         }
@@ -132,49 +125,12 @@ public class MainActivity extends SampActivity {
                 ServerConfigManager.getSelectedServer(getApplicationContext());
         if (selectedServer == null || !selectedServer.isValid()) {
             return LaunchPreparation.blocked(
-                    "Selecione um servidor valido antes de jogar.",
+                    "پێش یاری کردن، سێرڤەرێکی دروست هەڵبژێرە.",
                     TAB_SERVERS
             );
         }
 
-        boolean localHostSelected = isLocalHostOption(selectedServer);
-        if (shouldAllowImmediateLocalLaunch(selectedServer)) {
-            return LaunchPreparation.ready();
-        }
-
-        boolean selectedOnline = false;
-        String localHostFailureMessage = null;
-
-        if (localHostSelected) {
-            if (!HostShellEngine.isHostReady(getApplicationContext())
-                    && !HostShellEngine.isHostRunning(getApplicationContext())
-                    && !HostShellEngine.isHostStarting(getApplicationContext())) {
-                HostShellEngine.CommandResult bootResult =
-                        HostShellEngine.bootHost(getApplicationContext());
-                if (bootResult == null || !bootResult.success) {
-                    localHostFailureMessage = extractHostFailureMessage(bootResult);
-                }
-            }
-
-            selectedOnline = HostShellEngine.isHostReady(getApplicationContext())
-                    || HostShellEngine.isHostRunning(getApplicationContext())
-                    || HostShellEngine.isHostStarting(getApplicationContext());
-        }
-
-        if (!selectedOnline) {
-            selectedOnline = isServerReachable(selectedServer);
-        }
-
-        if (selectedOnline) {
-            return LaunchPreparation.ready();
-        }
-
-        return LaunchPreparation.blocked(
-                localHostSelected && localHostFailureMessage != null
-                        ? localHostFailureMessage
-                        : "O servidor selecionado nao respondeu agora. Edite ou escolha outro no launcher.",
-                -1
-        );
+        return LaunchPreparation.ready();
     }
 
     private void handleLaunchPreparation(LaunchPreparation preparation) {
@@ -224,7 +180,7 @@ public class MainActivity extends SampActivity {
     private void launchInstalledGameApk() {
         ServerConfigManager.ServerOption selectedServer = ServerConfigManager.getSelectedServer(this);
         if (selectedServer == null || !selectedServer.isValid()) {
-            Toast.makeText(this, "Adicione e selecione um servidor antes de abrir o game.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "پێش کردنەوەی یاری، سێرڤەرێک زیاد بکە و هەڵیبژێرە.", Toast.LENGTH_LONG).show();
             openTab(TAB_SETTINGS);
             return;
         }
@@ -242,7 +198,7 @@ public class MainActivity extends SampActivity {
         try {
             startActivity(intent);
         } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, "Instale o APK News RP para entrar no servidor.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "ئەپی یاری دابمەزرێنە بۆ چوونە ناو سێرڤەر.", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -275,41 +231,6 @@ public class MainActivity extends SampActivity {
         } finally {
             queryApi.close();
         }
-    }
-
-    private boolean shouldAllowImmediateLocalLaunch(ServerConfigManager.ServerOption option) {
-        if (option == null || !option.isValid()) {
-            return false;
-        }
-
-        if (!isLocalHostOption(option)) {
-            return false;
-        }
-
-        return HostShellEngine.isHostReady(getApplicationContext())
-                || HostShellEngine.isHostRunning(getApplicationContext())
-                || HostShellEngine.isHostStarting(getApplicationContext());
-    }
-
-    private boolean isLocalHostOption(ServerConfigManager.ServerOption option) {
-        if (option == null || !option.isValid()) {
-            return false;
-        }
-        boolean localLoopback = "127.0.0.1".equals(option.host) || "localhost".equalsIgnoreCase(option.host);
-        return localLoopback && option.port == 7777;
-    }
-
-    private String extractHostFailureMessage(HostShellEngine.CommandResult result) {
-        if (result == null || result.output == null || result.output.trim().isEmpty()) {
-            return "O host local nao respondeu agora. Abra a aba Host para revisar a base e tentar de novo.";
-        }
-
-        String message = result.output.trim();
-        int lineBreak = message.indexOf('\n');
-        if (lineBreak > 0) {
-            message = message.substring(0, lineBreak).trim();
-        }
-        return message;
     }
 
     private static final class LaunchPreparation {
@@ -473,20 +394,8 @@ public class MainActivity extends SampActivity {
                     return new HomeFragment();
                 case TAB_SERVERS:
                     return new ServersFragment();
-                case TAB_HOST:
-                    return new HostFragment();
-                case TAB_HOST_FILES:
-                    return new HostFilesFragment();
-                case TAB_EDITOR:
-                    return new EditorFragment();
-                case TAB_WORKBENCH:
-                    return new WorkbenchFragment();
-                case TAB_STORE:
-                    return new DonateFragment();
                 case TAB_SETTINGS:
                     return new SettingsFragment();
-                case TAB_CREDITS:
-                    return new CreditsFragment();
                 default:
                     return new HomeFragment();
             }

@@ -85,7 +85,6 @@ import android.webkit.WebViewClient;
 import android.webkit.JavascriptInterface;
 
 import com.xyron.game.launcher.util.ConfigValidator;
-import com.xyron.game.launcher.util.HostShellEngine;
 import com.xyron.game.launcher.util.ServerConfigManager;
 import org.ini4j.Wini;
 
@@ -704,57 +703,9 @@ public class SAMP extends com.raiferoleplay.game.game.SAMP implements CustomKeyb
     }
 
     private void ensureLocalHostRuntimeBeforeNativeConnect() {
-        ServerConfigManager.ServerOption option = ServerConfigManager.getSelectedServer(this);
-        if (option == null || !option.isValid()) {
-            return;
-        }
-        boolean localLoopback = "127.0.0.1".equals(option.host) || "localhost".equalsIgnoreCase(option.host);
-        if (!localLoopback || option.port != 7777) {
-            return;
-        }
-        if (HostShellEngine.isHostReady(this)
-                || HostShellEngine.isHostRunning(this)
-                || HostShellEngine.isHostStarting(this)) {
-            return;
-        }
-        if (localHostBootstrapRequested) {
-            return;
-        }
-        localHostBootstrapRequested = true;
-
-        Context appContext = getApplicationContext();
-        new Thread(() -> {
-            HostShellEngine.CommandResult result = HostShellEngine.bootHost(appContext);
-            if (result == null || !result.success) {
-                runOnUiThread(() -> Toast.makeText(
-                        SAMP.this,
-                        extractLocalHostRuntimeMessage(result),
-                        Toast.LENGTH_LONG
-                ).show());
-            }
-        }, "xyron-local-host-bootstrap").start();
+        // The built-in local server host was removed: nothing to prepare before connecting.
     }
 
-    private String extractLocalHostRuntimeMessage(HostShellEngine.CommandResult result) {
-        if (result == null || result.output == null || result.output.trim().isEmpty()) {
-            return "Nao foi possivel ligar o host local antes do jogo.";
-        }
-        String[] lines = result.output.trim().split("\\r?\\n");
-        for (String rawLine : lines) {
-            String line = rawLine == null ? "" : rawLine.trim();
-            if (line.isEmpty() || "Fluxo rapido do host".equalsIgnoreCase(line)) {
-                continue;
-            }
-            String normalized = line.toLowerCase(Locale.US);
-            if (normalized.contains("falha")
-                    || normalized.contains("erro")
-                    || normalized.contains("processo saiu")
-                    || normalized.contains("nao foi possivel")) {
-                return line;
-            }
-        }
-        return "Host local preparado para o jogo.";
-    }
      public void hideSystemUI() {
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(
