@@ -207,6 +207,7 @@ public class DataInstallActivity extends AppCompatActivity {
         detailView.setTextColor(Color.parseColor("#8FA1AE"));
         detailView.setTextSize(12);
         detailView.setGravity(Gravity.CENTER);
+        detailView.setTextIsSelectable(true);
         detailView.setPadding(0, dp(4), 0, dp(18));
         root.addView(detailView);
 
@@ -220,6 +221,18 @@ public class DataInstallActivity extends AppCompatActivity {
             }
         });
         root.addView(actionButton, new LinearLayout.LayoutParams(dp(220), dp(48)));
+
+        Button checkButton = new Button(this);
+        checkButton.setAllCaps(false);
+        checkButton.setText("پشکنینی داتا");
+        checkButton.setOnClickListener(v -> {
+            if (!running) {
+                checkDataNow();
+            }
+        });
+        LinearLayout.LayoutParams checkParams = new LinearLayout.LayoutParams(dp(220), dp(44));
+        checkParams.topMargin = dp(8);
+        root.addView(checkButton, checkParams);
 
         Button inAppButton = new Button(this);
         inAppButton.setAllCaps(false);
@@ -349,6 +362,8 @@ public class DataInstallActivity extends AppCompatActivity {
 
             extract(source, base);
 
+            normalizeLayout(base);
+
             if (GameDataVerifier.hasRequiredGameData(this)) {
                 if (source == archive) {
                     //noinspection ResultOfMethodCallIgnored
@@ -357,13 +372,102 @@ public class DataInstallActivity extends AppCompatActivity {
                 runOnUiThread(() -> progressBar.setProgress(1000));
                 finishWork("تەواو بوو ✅", "داتای یاری دامەزرا. دەتوانیت بگەڕێیتەوە و یاری بکەیت.");
             } else {
-                finishWork("داتا تەواو نییە",
-                        "فایلەکان دەرهێنران بەڵام هەندێک فایلی پێویست نەدۆزرانەوە. دووبارە هەوڵ بدەرەوە.");
+                finishWork("داتا تەواو نییە", buildReport(base));
             }
         } catch (CancelledException e) {
             finishWork("وەستێنرا", "کاتێک دووبارە دەستپێدەکەیتەوە، لە شوێنی وەستانەکەوە بەردەوام دەبێت.");
         } catch (Throwable error) {
             finishWork("هەڵە ڕووی دا", describe(error));
+        }
+    }
+
+    // If the archive was extracted inside an extra folder, move its content up so that
+    // anim/audio/data/models/texdb/SAMP sit directly in the game folder.
+    private void normalizeLayout(File base) {
+        try {
+            if (new File(base, "texdb").isDirectory()) {
+                return;
+            }
+            File root = findFolderWithTexdb(base, 0);
+            if (root == null || root.equals(base)) {
+                return;
+            }
+            File[] children = root.listFiles();
+            if (children == null) {
+                return;
+            }
+            for (File child : children) {
+                File target = new File(base, child.getName());
+                if (!target.exists()) {
+                    //noinspection ResultOfMethodCallIgnored
+                    child.renameTo(target);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private File findFolderWithTexdb(File dir, int depth) {
+        if (depth > 3) {
+            return null;
+        }
+        File[] children = dir.listFiles();
+        if (children == null) {
+            return null;
+        }
+        for (File child : children) {
+            if (child.isDirectory() && child.getName().equalsIgnoreCase("texdb")) {
+                return dir;
+            }
+        }
+        for (File child : children) {
+            if (child.isDirectory()) {
+                File found = findFolderWithTexdb(child, depth + 1);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String buildReport(File base) {
+        List<String> missing = GameDataVerifier.findMissing(this);
+        StringBuilder out = new StringBuilder();
+        out.append("فایلی کەم (").append(missing.size()).append("):\n");
+        for (int i = 0; i < missing.size() && i < 8; i++) {
+            out.append(missing.get(i)).append('\n');
+        }
+        if (missing.size() > 8) {
+            out.append("...\n");
+        }
+        out.append("\nفۆڵدەرەکانی ناو files: ");
+        File[] children = base.listFiles();
+        if (children != null) {
+            int shown = 0;
+            for (File child : children) {
+                if (shown++ >= 14) {
+                    out.append("...");
+                    break;
+                }
+                out.append(child.getName()).append(child.isDirectory() ? "/ " : " ");
+            }
+        }
+        return out.toString();
+    }
+
+    private void checkDataNow() {
+        File base = getExternalFilesDir(null);
+        if (base == null) {
+            return;
+        }
+        normalizeLayout(base);
+        if (GameDataVerifier.hasRequiredGameData(this)) {
+            statusView.setText("داتا تەواوە ✅");
+            detailView.setText("هەموو فایلە پێویستەکان هەن.");
+        } else {
+            statusView.setText("داتا تەواو نییە");
+            detailView.setText(buildReport(base));
         }
     }
 

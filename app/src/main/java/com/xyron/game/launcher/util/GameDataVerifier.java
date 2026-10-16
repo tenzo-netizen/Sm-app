@@ -3,6 +3,8 @@ package com.xyron.game.launcher.util;
 import android.content.Context;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class GameDataVerifier {
     private static final String[] REQUIRED_DIRECTORIES = new String[] {
@@ -78,5 +80,38 @@ public final class GameDataVerifier {
     private static boolean hasNonEmptyFile(File baseDirectory, String relativePath) {
         File file = new File(baseDirectory, relativePath);
         return file.exists() && file.isFile() && file.length() > 0L;
+    }
+    // Lists what is missing (empty list = data is complete). Used to show a clear report.
+    public static List<String> findMissing(Context context) {
+        List<String> missing = new ArrayList<>();
+        File base = context.getExternalFilesDir(null);
+        if (base == null) {
+            missing.add("(پۆڵدەری یاری نییە)");
+            return missing;
+        }
+        for (String dir : REQUIRED_DIRECTORIES) {
+            File directory = new File(base, dir);
+            if (!directory.exists() || !directory.isDirectory()) {
+                missing.add(dir + "/");
+            }
+        }
+        for (String path : REQUIRED_FILES) {
+            if (!hasNonEmptyFile(base, path)) {
+                missing.add(path);
+            }
+        }
+        String[] sets = {"texdb/gta3/gta3", "texdb/gta_int/gta_int", "texdb/menu/menu",
+                "texdb/mobile/mobile", "texdb/samp/samp", "texdb/txd/txd"};
+        for (String set : sets) {
+            if (!hasTextureSet(base, set)) {
+                missing.add(set + ".(dxt|etc|pvr).(dat|tmb|toc)");
+            }
+        }
+        for (String ext : new String[] {"dat", "tmb", "toc"}) {
+            if (!hasNonEmptyFile(base, "texdb/player/player.pvr." + ext)) {
+                missing.add("texdb/player/player.pvr." + ext);
+            }
+        }
+        return missing;
     }
 }
