@@ -8,5 +8,28 @@
     "client_config_path": "client_config.json",
     "files_path_prefix": ""
   },
-  "data_variants": []
+  "data_variants": [
+    {
+      "id": "lite",
+      "label": "Data Lite",
+      "huggingface": {
+        "repo_id": "dfdffdfdfdfd/gta-data-files-universal",
+        "repo_type": "dataset",
+        "revision": "main",
+        "client_config_path": "client_config.json",
+        "files_path_prefix": "data-lite/files"
+      }
+    },
+    {
+      "id": "full",
+      "label": "Data Full",
+      "huggingface": {
+        "repo_id": "dfdffdfdfdfd/gta-data-files-universal",
+        "repo_type": "dataset",
+        "revision": "main",
+        "client_config_path": "client_config.json",
+        "files_path_prefix": "data-full/files"
+      }
+    }
+  ]
 }

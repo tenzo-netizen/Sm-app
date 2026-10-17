@@ -540,9 +540,16 @@ public class UpdateService extends Service {
         Log.d("x1y2z", "Data size: " + mUpdateGameDataSize);
     }
 
+    // When true (set after the .7z was extracted), files that already exist are kept
+    // and only the missing ones are downloaded.
+    public static volatile boolean sMissingOnly = false;
+
     private boolean isCompleteFile(File file, long expectedSize) {
         if (file == null || !file.exists() || !file.isFile()) {
             return false;
+        }
+        if (sMissingOnly) {
+            return file.length() > 0L;
         }
         return expectedSize <= 0L || file.length() == expectedSize;
     }

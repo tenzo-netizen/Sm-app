@@ -85,6 +85,7 @@ public class DataInstallActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        UpdateService.sMissingOnly = false;
         buildUi();
         updateButtons();
     }
@@ -221,6 +222,18 @@ public class DataInstallActivity extends AppCompatActivity {
             }
         });
         root.addView(actionButton, new LinearLayout.LayoutParams(dp(220), dp(48)));
+
+        Button fillButton = new Button(this);
+        fillButton.setAllCaps(false);
+        fillButton.setText("گرتنی فایلە کەمەکان");
+        fillButton.setOnClickListener(v -> {
+            if (!running) {
+                startMissingFill();
+            }
+        });
+        LinearLayout.LayoutParams fillParams = new LinearLayout.LayoutParams(dp(220), dp(44));
+        fillParams.topMargin = dp(8);
+        root.addView(fillButton, fillParams);
 
         Button checkButton = new Button(this);
         checkButton.setAllCaps(false);
@@ -372,7 +385,9 @@ public class DataInstallActivity extends AppCompatActivity {
                 runOnUiThread(() -> progressBar.setProgress(1000));
                 finishWork("تەواو بوو ✅", "داتای یاری دامەزرا. دەتوانیت بگەڕێیتەوە و یاری بکەیت.");
             } else {
-                finishWork("داتا تەواو نییە", buildReport(base));
+                finishWork("هەندێک فایل کەمە", buildReport(base)
+                        + "\n\nفایلە کەمەکان دەگیرێن لە سێرڤەری سەرەکی...");
+                new Handler(Looper.getMainLooper()).postDelayed(this::startMissingFill, 3000);
             }
         } catch (CancelledException e) {
             finishWork("وەستێنرا", "کاتێک دووبارە دەستپێدەکەیتەوە، لە شوێنی وەستانەکەوە بەردەوام دەبێت.");
@@ -469,6 +484,18 @@ public class DataInstallActivity extends AppCompatActivity {
             statusView.setText("داتا تەواو نییە");
             detailView.setText(buildReport(base));
         }
+    }
+
+    // Opens the old updater in "missing files only" mode: it keeps everything that was
+    // extracted from the .7z and downloads just the files that are still missing.
+    private void startMissingFill() {
+        if (isFinishing()) {
+            return;
+        }
+        UpdateService.sMissingOnly = true;
+        Intent intent = new Intent(this, UpdateActivity.class);
+        intent.putExtra("mode", UpdateActivity.UpdateMode.GameDataUpdate.name());
+        startActivity(intent);
     }
 
     private String describe(Throwable error) {
