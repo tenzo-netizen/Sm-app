@@ -253,8 +253,8 @@ public class SplashActivity extends SampActivity {
         routeWithoutUpdateService();
     }
 
-    // The old file-by-file updater is no longer used: if the game data is complete
-    // go to the launcher, otherwise open the new data installer.
+    // The old file-by-file updater is not started here any more: if the game data is complete
+    // go to the launcher, otherwise open the data installer.
     private void routeWithoutUpdateService() {
         runOnUiThread(() -> {
             if (isFinishing()) {

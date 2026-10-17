@@ -88,6 +88,16 @@ public class DataInstallActivity extends AppCompatActivity {
         UpdateService.sMissingOnly = false;
         buildUi();
         updateButtons();
+
+        // One tap flow: opening this screen starts everything automatically.
+        if (savedInstanceState == null) {
+            if (GameDataVerifier.hasRequiredGameData(this)) {
+                statusView.setText("داتا تەواوە ✅");
+                detailView.setText("هەموو فایلە پێویستەکان هەن.");
+            } else {
+                startWork();
+            }
+        }
     }
 
     private void showWebOverlay() {
