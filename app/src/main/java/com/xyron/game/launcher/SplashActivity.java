@@ -110,7 +110,11 @@ public class SplashActivity extends SampActivity {
                 Log.e("x1y2z", "GPU type: " + gpuType.name());
 
                 if (isPermissionsGranted()) {
-                    routeWithoutUpdateService();
+                    bindService(
+                            new Intent(SplashActivity.this, UpdateService.class),
+                            mConnection,
+                            Context.BIND_AUTO_CREATE
+                    );
                 } else {
                     ActivityCompat.requestPermissions(SplashActivity.this, permissions, 1);
                 }
@@ -250,27 +254,12 @@ public class SplashActivity extends SampActivity {
             return;
         }
 
-        routeWithoutUpdateService();
-    }
-
-    // The old file-by-file updater is not started here any more: if the game data is complete
-    // go to the launcher, otherwise open the data installer.
-    private void routeWithoutUpdateService() {
-        runOnUiThread(() -> {
-            if (isFinishing()) {
-                return;
-            }
-            if (hasRequiredGameData()) {
-                startActivity(new Intent(SplashActivity.this, MainActivity.class));
-                finish();
-            } else {
-                startGameDataUpdate();
-            }
-        });
+        bindService(new Intent(this, UpdateService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
 
     private void startGameDataUpdate() {
-        Intent intent = new Intent(SplashActivity.this, DataInstallActivity.class);
+        Intent intent = new Intent(SplashActivity.this, UpdateActivity.class);
+        intent.putExtra("mode", UpdateActivity.UpdateMode.GameDataUpdate.name());
         startActivity(intent);
         finish();
     }

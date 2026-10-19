@@ -326,7 +326,9 @@ public class HomeFragment extends Fragment {
 
         MainActivity activity = (MainActivity) getActivity();
         if (nextStepAction == NEXT_STEP_UPDATE_DATA) {
-            startActivity(new Intent(requireContext(), com.xyron.game.launcher.DataInstallActivity.class));
+            Intent intent = new Intent(requireContext(), UpdateActivity.class);
+            intent.putExtra("mode", UpdateActivity.UpdateMode.GameDataUpdate.name());
+            startActivity(intent);
             return;
         }
 

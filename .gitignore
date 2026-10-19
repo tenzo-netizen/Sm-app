@@ -35,3 +35,10 @@ app/*.keystore
 
 # Prebuilt binaries: keep local only when building a runnable APK.
 # Do not publish these in a source-only release.
+app/src/main/assets/files/anim/cuts.img
+app/src/main/assets/files/audio/SFX/SCRIPT.osw
+app/src/main/assets/files/audio/SFX/SPC_GA.osw
+app/src/main/assets/files/audio/SFX/SPC_NA.osw
+app/src/main/assets/files/audio/STREAMS/CUTSCENE.osw
+app/src/main/assets/files/texdb/gta3/gta3.RENAME.dat
+app/src/main/assets/files/texdb/gta3.img

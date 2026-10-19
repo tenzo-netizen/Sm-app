@@ -32,7 +32,9 @@ public class EntryActivity extends SampActivity {
         boolean forceUpdate = getIntent() != null
                 && getIntent().getBooleanExtra(EXTRA_FORCE_UPDATE_DATA, false);
         if (forceUpdate) {
-            startActivity(new Intent(this, DataInstallActivity.class));
+            Intent updateIntent = new Intent(this, UpdateActivity.class);
+            updateIntent.putExtra("mode", UpdateActivity.UpdateMode.GameDataUpdate.name());
+            startActivity(updateIntent);
             finish();
             return;
         }
